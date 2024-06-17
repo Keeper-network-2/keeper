@@ -31,6 +31,10 @@ deploy-all-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-sav
 start-anvil-chain-with-el-and-avs-deployed: ## starts anvil from a saved state file (with el and avs contracts deployed)
 	./tests/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
 
+create-a-new-job: ## starts anvil from a saved state file (with el and avs contracts deployed)
+	./tests/anvil/create-a-new-job.sh
+
+
 bindings: ## generates contract bindings
 	cd contracts && ./generate-go-bindings.sh
 
@@ -68,7 +72,7 @@ send-fund: ## sends fund to the operator saved in tests/keys/test.ecdsa.key.json
 # TODO: piping to zap-pretty only works when zapper environment is set to production, unsure why
 ____OFFCHAIN_SOFTWARE___: ## 
 start-aggregator: ## 
-	go run aggregator/cmd/main.go --config config-files/aggregator.yaml \
+	go run taskmanager/cmd/main.go --config config-files/aggregator.yaml \
 		--credible-squaring-deployment ${DEPLOYMENT_FILES_DIR}/credible_squaring_avs_deployment_output.json \
 		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
 		2>&1 | zap-pretty
