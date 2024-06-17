@@ -31,7 +31,7 @@ contract CreateJobScript is Script {
 
         string memory jobType = "Example Job Type";
         string memory jobDescription = "This is an example job description.";
-        string memory gitlink = "https://github.com/example/repo";
+        string memory gitlink = "https://gist.githubusercontent.com/nipunshah412/7d21fc1cdd74a25f940139133f58307f/raw/fbba4d005d695e911f9071b84de11a3f3c8a4fe7/BTCPriceOracle.js";
         string memory status = "Open";
         bytes memory quorumNumbers = abi.encodePacked(uint8(1), uint8(2), uint8(3)); // Example quorum numbers
         uint32 quorumThresholdPercentage = 70; // Example quorum threshold percentage
