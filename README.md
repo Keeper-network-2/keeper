@@ -84,7 +84,7 @@ make create-job
 ## resources
 
 Overview of Keeper Network AVS: 
-[The Future is Bright: Keeper Networks 2.0 Paves the Way for Secure and Scalable ] (https://mirror.xyz/0x328f573aB35557d52f8822DAda203dCb4B56da37/bCU89iYEUT5bKBLNZz-3k07aSKh0Fm9MKJFxiA46kiQ)
+[The Future is Bright: Keeper Networks 2.0 Paves the Way for Secure and Scalable](https://mirror.xyz/0x328f573aB35557d52f8822DAda203dCb4B56da37/bCU89iYEUT5bKBLNZz-3k07aSKh0Fm9MKJFxiA46kiQ)
 
 For more technical insights, [click here!](https://mirror.xyz/0x328f573aB35557d52f8822DAda203dCb4B56da37/VbZOuwYU65h0ZmxC7C-D316O_H5qQ8Z6-L-MDxgxXzw)
 
