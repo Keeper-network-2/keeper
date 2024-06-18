@@ -5,12 +5,13 @@ help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 AGGREGATOR_ECDSA_PRIV_KEY=0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
-CHALLENGER_ECDSA_PRIV_KEY=0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 
 CHAINID=31337
+
 # Make sure to update this if the strategy address changes
 # check in contracts/script/output/${CHAINID}/credible_squaring_avs_deployment_output.json
-STRATEGY_ADDRESS=0x7a2088a1bFc9d81c55368AE168C2C02570cB814F
+
+STRATEGY_ADDRESS=0x4c5859f0F772848b2D91F1D83E2Fe57935348029
 DEPLOYMENT_FILES_DIR=contracts/script/output/${CHAINID}
 
 -----------------------------: ## 
@@ -23,7 +24,7 @@ build-contracts: ## builds all contracts
 deploy-eigenlayer-contracts-to-anvil-and-save-state: ## Deploy eigenlayer
 	./tests/anvil/deploy-eigenlayer-save-anvil-state.sh
 
-deploy-incredible-squaring-contracts-to-anvil-and-save-state: ## Deploy avs
+deploy-keeper-network-contracts-to-anvil-and-save-state: ## Deploy avs
 	./tests/anvil/deploy-avs-save-anvil-state.sh
 
 deploy-all-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-incredible-squaring-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts 
@@ -34,12 +35,6 @@ start-anvil-chain-with-el-and-avs-deployed: ## starts anvil from a saved state f
 bindings: ## generates contract bindings
 	cd contracts && ./generate-go-bindings.sh
 
-___DOCKER___: ## 
-docker-build-and-publish-images: ## builds and publishes operator and aggregator docker images using Ko
-	KO_DOCKER_REPO=ghcr.io/layr-labs/incredible-squaring ko build aggregator/cmd/main.go --preserve-import-paths
-	KO_DOCKER_REPO=ghcr.io/layr-labs/incredible-squaring ko build operator/cmd/main.go --preserve-import-paths
-docker-compose-up: ## runs docker compose pull first and then up
-	docker compose pull && docker compose up -d
 
 __CLI__: ## 
 
@@ -109,31 +104,27 @@ help:
 	@echo "  help     - Show this help message"
 
 ____OFFCHAIN_SOFTWARE___: ## 
-start-aggregator: ## 
-	go run aggregator/cmd/main.go --config config-files/aggregator.yaml \
-		--credible-squaring-deployment ${DEPLOYMENT_FILES_DIR}/credible_squaring_avs_deployment_output.json \
-		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
-		2>&1 | zap-pretty
+# start-aggregator: ## 
+# 	go run aggregator/cmd/main.go --config config-files/aggregator.yaml \
+# 		--credible-squaring-deployment ${DEPLOYMENT_FILES_DIR}/credible_squaring_avs_deployment_output.json \
+# 		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
+# 		2>&1 | zap-pretty
 
-start-operator: ## 
-	go run operator/cmd/main.go --config config-files/operator.anvil.yaml \
-		2>&1 | zap-pretty
+start-keeper: ## 
+	go run keeper/keeper.go
 
 start-task-manager: ## 
-	go run taskmanager/cmd/main.go --config config-files/task-manager.yaml \
-		2>&1 | zap-pretty
+	cd taskmanager && go run cmd/main.go
 
-
-start-challenger: ## 
-	go run challenger/cmd/main.go --config config-files/challenger.yaml \
-		--credible-squaring-deployment ${DEPLOYMENT_FILES_DIR}/credible_squaring_avs_deployment_output.json \
-		--ecdsa-private-key ${CHALLENGER_ECDSA_PRIV_KEY} \
-		2>&1 | zap-pretty
 
 run-plugin: ## 
 	go run plugin/cmd/main.go --config config-files/operator.anvil.yaml
 -----------------------------: ## 
 _____HELPER_____: ## 
+
+create-job:
+	cd contracts && forge script script/CreateJob.s.sol --rpc-url http://localhost:8545 --broadcast
+
 mocks: ## generates mocks for tests
 	go install go.uber.org/mock/mockgen@v0.3.0
 	go generate ./...
