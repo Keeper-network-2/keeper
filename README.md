@@ -51,5 +51,5 @@ make create-job
 ## Avs Task Description
 
 
-![](./diagrams/architecture.png)
+![](./diagrams/keepernetwork.png)
 
