@@ -32,7 +32,7 @@ The above command starts a local anvil chain from a [saved state](./tests/anvil/
 Start the task manager:
 
 ```bash
-make task-manager
+make start-task-manager
 ```
 
 Register the Keeper(operator) with eigenlayer and incredible-squaring, and then start the process:
