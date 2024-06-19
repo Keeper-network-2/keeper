@@ -78,6 +78,18 @@ make create-job
 
 ![](./diagrams/keepernetwork.png)
 
+The Job Creator defines and lists tasks on the Task Manager, which processes the job details and creates corresponding tasks. The Task Dispatcher then sends these tasks to available keepers (Operators) based on their availability.
+
+The Keeper schedules, executes, and records the task, signing the response upon completion and sending it to the Aggregator via an RPC (Remote Procedure Call). The Aggregator collects and consolidates responses from multiple keepers, sending the aggregated response to the Task Manager.
+
+The Task Manager forwards the response to the Challenger for validation. The Challenger verifies the response, raising disputes if any discrepancies are found. Disputes are handled by the Challenger and Service Manager, who may apply penalties if necessary.
+
+The validated response is then sent back to the Task Manager, which delivers the final response to the Job Creator, completing the task lifecycle. Operators register with the Registry and AVS, having already staked in the Eigen Layer to ensure commitment and network integrity.
+
+
+
+
+
 <b> Note: </b> The Aggregator, Metrics, Challenger and Service Manager components are in progress.
 
 
