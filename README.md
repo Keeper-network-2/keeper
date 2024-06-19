@@ -20,7 +20,7 @@ Service Manager enforces penalties if malpractices are detected.
 
 <b>Economic Trust:</b> EigenLayer's restaked assets model enhances economic security, ensuring all participants are financially committed to maintaining network integrity.
 
-# Applications
+## Applications
 
 Automating tasks in DeFi.
 Regular updates for decentralized apps.
@@ -75,13 +75,13 @@ make create-job
 
 ## Avs Task Description
 
-<b> Note: </b> The Aggregator, Metrics, Challenger and Service Manager components are in progress.
 
 ![](./diagrams/keepernetwork.png)
 
+<b> Note: </b> The Aggregator, Metrics, Challenger and Service Manager components are in progress.
 
 
-## resources
+## Resources
 
 Overview of Keeper Network AVS: 
 [The Future is Bright: Keeper Networks 2.0 Paves the Way for Secure and Scalable](https://mirror.xyz/0x328f573aB35557d52f8822DAda203dCb4B56da37/bCU89iYEUT5bKBLNZz-3k07aSKh0Fm9MKJFxiA46kiQ)
