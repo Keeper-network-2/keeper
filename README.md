@@ -20,13 +20,11 @@ Service Manager enforces penalties if malpractices are detected.
 
 <b>Economic Trust:</b> EigenLayer's restaked assets model enhances economic security, ensuring all participants are financially committed to maintaining network integrity.
 
-<b>Applications:</b>
+# Applications
 
 Automating tasks in DeFi.
 Regular updates for decentralized apps.
 Any system needing reliable, decentralized task management.
-
-
 
 
 A decentralized keeper network leveraging EigenLayer's infrastructure. Developers can list automation jobs specifying a URL of code to execute and intervals. Tasks are assigned to keepers for execution, enhancing network automation and reliability.
@@ -77,8 +75,10 @@ make create-job
 
 ## Avs Task Description
 
+<b> Note: </b> The Aggregator, Metrics, Challenger and Service Manager components are in progress.
 
 ![](./diagrams/keepernetwork.png)
+
 
 
 ## resources
