@@ -30,7 +30,7 @@ contract KeeperNetworkServiceManager is ServiceManagerBase {
     )
         ServiceManagerBase(
             _avsDirectory,
-            IPaymentCoordinator(address(0)), // KeeperNetwork doesn't need to deal with payments
+            IRewardsCoordinator(address(0)), // KeeperNetwork doesn't need to deal with payments
             _registryCoordinator,
             _stakeRegistry
         )
