@@ -324,7 +324,7 @@ contract KeeperNetworkDeployer is Script, Utils {
             avsDirectory,
             registryCoordinator,
             stakeRegistry,
-            keeperNetworkTaskManager
+            keeperNetworkTaskManagerImplementation
         );
 
         keeperNetworkProxyAdmin.upgrade(
@@ -332,7 +332,7 @@ contract KeeperNetworkDeployer is Script, Utils {
             address(keeperNetworkServiceManagerImplementation)
         );
 
-        keeperNetworkTaskManagerImplementation = new KeeperNetworkTaskManager(
+        keeperNetworkTaskManager = new KeeperNetworkTaskManager(
             registryCoordinator,
             TASK_RESPONSE_WINDOW_BLOCK
         );
@@ -349,11 +349,11 @@ contract KeeperNetworkDeployer is Script, Utils {
             )
         );
 
-        jobManagerImplementation = new JobCreator(
-            registryCoordinator
+        jobManager = new JobCreator(
+            //registryCoordinator
         );
 
-        keeperNetworkProxyAdmin.upgradeAndCall(
+        /* keeperNetworkProxyAdmin.upgradeAndCall(
             TransparentUpgradeableProxy(payable(address(jobManager))),
             address(jobManagerImplementation),
             abi.encodeWithSelector(
@@ -361,7 +361,7 @@ contract KeeperNetworkDeployer is Script, Utils {
                 keeperNetworkPauserReg,
                 keeperNetworkCommunityMultisig
             )
-        );
+        ); */
 
         // WRITE JSON DATA
         string memory parent_object = "parent object";
