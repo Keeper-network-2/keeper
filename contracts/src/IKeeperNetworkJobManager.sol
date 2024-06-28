@@ -79,12 +79,3 @@ interface IKeeperNetworkJobManager {
     function updateJobStatus(uint32 jobId, string calldata status) external;
     // function assignJob(uint32 jobId, address operator) external;
 }
-
-
-
-
-
-
-
-
-

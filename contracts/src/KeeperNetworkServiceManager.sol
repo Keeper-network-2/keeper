@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import "@eigenlayer/contracts/libraries/BytesLib.sol";
 import "./IKeeperNetworkTaskManager.sol";
+import "./IKeeperNetworkJobManager.sol";
 import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
 
 /**
