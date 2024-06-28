@@ -11,7 +11,7 @@ import "@eigenlayer-middleware/src/libraries/BN254.sol";
 import "./IKeeperNetworkJobManager.sol";
 
 
-contract JobCreator is 
+contract JobManager is 
     IKeeperNetworkJobManager
 {
     address public owner;
