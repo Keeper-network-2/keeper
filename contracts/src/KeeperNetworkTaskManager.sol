@@ -20,7 +20,7 @@ import "./IKeeperNetworkTaskManager.sol";
 //     OperatorStateRetriever
 
 
-contract TaskManager is Initializable,
+contract KeeperNetworkTaskManager is Initializable,
     OwnableUpgradeable,
     Pausable
 {

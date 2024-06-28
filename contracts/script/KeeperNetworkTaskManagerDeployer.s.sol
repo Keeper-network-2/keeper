@@ -20,10 +20,11 @@ import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import {KeeperNetworkServiceManager, IServiceManager} from "../src/KeeperNetworkServiceManager.sol";
 import {KeeperNetworkTaskManager} from "../src/KeeperNetworkTaskManager.sol";
 import {IKeeperNetworkTaskManager} from "../src/IKeeperNetworkTaskManager.sol";
+import {JobCreator} from "../src/Jobmanager.sol";
+import {IKeeperNetworkJobManager} from "../src/IKeeperNetworkJobManager.sol";
 import "../src/ERC20Mock.sol";
 
 import {Utils} from "./utils/Utils.sol";
-
 
 import "forge-std/Test.sol";
 import "forge-std/Script.sol";
@@ -68,6 +69,9 @@ contract KeeperNetworkDeployer is Script, Utils {
 
     KeeperNetworkTaskManager public keeperNetworkTaskManager;
     IKeeperNetworkTaskManager public keeperNetworkTaskManagerImplementation;
+
+    JobCreator public jobManager;
+    IKeeperNetworkJobManager public jobManagerImplementation;
 
     function run() external {
         // Eigenlayer contracts
@@ -182,6 +186,15 @@ contract KeeperNetworkDeployer is Script, Utils {
             )
         );
         keeperNetworkTaskManager = KeeperNetworkTaskManager(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(emptyContract),
+                    address(keeperNetworkProxyAdmin),
+                    ""
+                )
+            )
+        );
+        jobManager = JobCreator(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -336,6 +349,20 @@ contract KeeperNetworkDeployer is Script, Utils {
             )
         );
 
+        jobManagerImplementation = new JobCreator(
+            registryCoordinator
+        );
+
+        keeperNetworkProxyAdmin.upgradeAndCall(
+            TransparentUpgradeableProxy(payable(address(jobManager))),
+            address(jobManagerImplementation),
+            abi.encodeWithSelector(
+                jobManager.initialize.selector,
+                keeperNetworkPauserReg,
+                keeperNetworkCommunityMultisig
+            )
+        );
+
         // WRITE JSON DATA
         string memory parent_object = "parent object";
 
@@ -346,6 +373,8 @@ contract KeeperNetworkDeployer is Script, Utils {
         vm.serializeAddress(deployed_addresses, "keeperNetworkServiceManagerImplementation", address(keeperNetworkServiceManagerImplementation));
         vm.serializeAddress(deployed_addresses, "keeperNetworkTaskManager", address(keeperNetworkTaskManager));
         vm.serializeAddress(deployed_addresses, "keeperNetworkTaskManagerImplementation", address(keeperNetworkTaskManagerImplementation));
+        vm.serializeAddress(deployed_addresses, "jobManager", address(jobManager));
+        vm.serializeAddress(deployed_addresses, "jobManagerImplementation", address(jobManagerImplementation));
         vm.serializeAddress(deployed_addresses, "registryCoordinator", address(registryCoordinator));
         vm.serializeAddress(deployed_addresses, "registryCoordinatorImplementation", address(registryCoordinatorImplementation));
         string memory deployed_addresses_output = vm.serializeAddress(deployed_addresses, "operatorStateRetriever", address(operatorStateRetriever));
