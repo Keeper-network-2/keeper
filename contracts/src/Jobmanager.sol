@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-
+import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
+import "@eigenlayer/contracts/permissions/Pausable.sol";
 import "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {BLSApkRegistry} from "@eigenlayer-middleware/src/BLSApkRegistry.sol";
 import {RegistryCoordinator} from "@eigenlayer-middleware/src/RegistryCoordinator.sol";
 import {BLSSignatureChecker, IRegistryCoordinator} from "@eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
-import "./IKeeperNetworkJobManager.sol";
+import "./IKeeperNetworkTaskManager.sol";
 
 
 contract JobCreator is 
-    IKeeperNetworkJobManager
+    IKeeperNetworkTaskManager
 {
     address public owner;
     mapping(uint32 => Job) public jobs;
