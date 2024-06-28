@@ -10,11 +10,11 @@ import {RegistryCoordinator} from "@eigenlayer-middleware/src/RegistryCoordinato
 import {BLSSignatureChecker, IRegistryCoordinator} from "@eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
-import "./IKeeperNetworkTaskManager.sol";
+import "./IKeeperNetworkJobManager.sol";
 
 
 contract JobCreator is 
-    IKeeperNetworkTaskManager
+    IKeeperNetworkJobManager
 {
     address public owner;
     mapping(uint32 => Job) public jobs;

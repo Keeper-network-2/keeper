@@ -5,77 +5,63 @@ import "@eigenlayer-middleware/src/libraries/BN254.sol";
 
 interface IKeeperNetworkTaskManager {
     // EVENTS
-    event JobResponded(
-        JobResponse jobResponse,
-        JobResponseMetadata jobResponseMetadata
+    event TaskCreated(uint32 indexed taskId, uint32 indexed jobId, string taskType);
+    event TaskDeleted(uint32 indexed taskId);
+    event TaskStatusUpdated(uint32 indexed taskId, string status);
+    event TaskAssigned(uint32 indexed taskId, address operator);
+    event TaskCompleted(uint32 indexed taskId);
+    event TaskResponded(
+        TaskResponse taskResponse,
+        TaskResponseMetadata taskResponseMetadata
     );
-    // event JobCompleted(uint32 indexed jobId);
-    // event JobChallengedSuccessfully(
-    //     uint32 indexed jobId,
-    //     address indexed challenger
-    // );
-    event JobCreated(
-        uint32 indexed jobId,
-        string jobType,
-        string contract_add,
-        uint chain_id
+    event TaskChallengedSuccessfully(
+        uint32 indexed taskId,
+        address indexed challenger
     );
-    event JobDeleted(uint32 indexed jobId);
-    // event JobEvent(
-    //     uint32 indexed jobId,
-    //     string jobType,
-    //     string status
-    // );
-    event JobStatusUpdated(uint32 indexed jobId, string status);
-    // event JobAssigned(uint32 indexed jobId, address operator);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
 
     // STRUCTS
-    struct JobResponse {
-        uint32 referenceJobId;
+    struct Task {
+        uint32 taskId;
+        uint32 jobId;
+        string taskType;
+        string status;
+        uint256 blockNumber;
+    }
+
+    struct TaskResponse {
+        uint32 referenceTaskId;
         uint256 numberSquared;
     }
 
-    struct JobResponseMetadata {
-        uint256 jobResponsedBlock;
+    struct TaskResponseMetadata {
+        uint256 taskResponsedBlock;
         bytes32 hashOfNonSigners;
     }
 
-    struct Job {
-        uint32 jobId;
-        string jobType;
-        string status;
-        bytes quorumNumbers;
-        uint32 quorumThresholdPercentage;
-        uint32 timeframe;
-        uint256 blockNumber;
-        string contract_add;
-        uint chain_id;
-        string target_fnc;
-    }
-
     // FUNCTIONS
-    function stake() external payable;
-    function withdraw(uint256 amount) external;
-    function joobNumber() external view returns (uint32);
-    // function raiseAndResolveChallenge(
-    //     Job calldata job,
-    //     JobResponse calldata jobResponse,
-    //     JobResponseMetadata calldata jobResponseMetadata,
-    //     BN254.G1Point[] memory pubkeysOfNonSigningOperators
-    // ) external;
-    function createJob(
-        string calldata jobType,
-        string calldata status,
-        bytes calldata quorumNumbers,
-        uint32 quorumThresholdPercentage,
-        uint32 timeframe,
-        string calldata contract_add,
-        uint chain_id,
-        string calldata target_fnc
+    function createTask(
+        uint32 jobId,
+        string calldata taskType,
+        string calldata status
     ) external;
-    function deleteJob(uint32 jobId) external;
-    function updateJobStatus(uint32 jobId, string calldata status) external;
-    // function assignJob(uint32 jobId, address operator) external;
+
+    function deleteTask(uint32 taskId) external;
+
+    function updateTaskStatus(uint32 taskId, string calldata status) external;
+
+    function assignTask(uint32 taskId, address operator) external;
+
+    function respondToTask(
+        uint32 taskId,
+        TaskResponse calldata taskResponse,
+        TaskResponseMetadata calldata taskResponseMetadata,
+        BN254.G1Point[] memory pubkeysOfNonSigningOperators
+    ) external;
+
+    function raiseAndResolveChallenge(
+        Task calldata task,
+        TaskResponse calldata taskResponse,
+        TaskResponseMetadata calldata taskResponseMetadata,
+        BN254.G1Point[] memory pubkeysOfNonSigningOperators
+    ) external;
 }
