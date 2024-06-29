@@ -78,15 +78,22 @@ make create-job
 
 ![](./diagrams/keepernetwork.png)
 
-The Job Creator defines and lists tasks on the Task Manager, which processes the job details and creates corresponding tasks. The Task Dispatcher then sends these tasks to available keepers (Operators) based on their availability.
+This architecture outlines a sophisticated decentralized job execution system, likely designed for blockchain-based applications. At its core, the system separates job creation, task management, execution, and result aggregation into distinct components, allowing for a flexible and scalable workflow.
+The process begins with the JobManager, which creates jobs consisting of multiple tasks. These jobs are then passed to the KeeperNetworkTaskManager, responsible for breaking down jobs into individual tasks and managing their lifecycles. The TaskManager acts as an intermediary, listening for new jobs and allocating tasks to available Keepers at scheduled times.
+Keepers, the workhorses of the system, execute the assigned tasks and sign their results using BLS signatures for security and authenticity. These signed results are then sent to the Aggregator, which collects, verifies, and processes the responses from multiple Keepers.
+The final step involves the Aggregator sending the processed data back to the Task Creation smart contract, which updates the task statuses and forwards the results to the original Job Creator. This completes the cycle of job creation, execution, and result reporting.
+The workflow begins with the JobManager creating multi-task jobs. These are passed to the KeeperNetworkTaskManager for task breakdown and lifecycle management. The TaskManager then allocates tasks to available Keepers at scheduled times.
+Keepers execute assigned tasks, signing results with BLS signatures for security. The Aggregator collects, verifies, and processes these responses before sending the data to the Task Creation smart contract, which updates task statuses and reports results back to the Job Creator.
+It's important to note that several key features are still in development:
 
-The Keeper schedules, executes, and records the task, signing the response upon completion and sending it to the Aggregator via an RPC (Remote Procedure Call). The Aggregator collects and consolidates responses from multiple keepers, sending the aggregated response to the Task Manager.
+Metrics for monitoring operator health: This will provide insights into the performance and reliability of the Keepers.
+JobURL implementation: This feature will allow the system to retrieve job details directly from the job creator, potentially enhancing flexibility and reducing on-chain data storage.
+P2P network among operators: This addition will enable direct communication between Keepers, which could improve efficiency and resilience of the system.
 
-The Task Manager forwards the response to the Challenger for validation. The Challenger verifies the response, raising disputes if any discrepancies are found. Disputes are handled by the Challenger and Service Manager, who may apply penalties if necessary.
+These upcoming features will likely enhance the system's robustness, scalability, and decentralization. The metrics will aid in system management, the JobURL will streamline job distribution, and the P2P network will foster a more interconnected and resilient operator ecosystem.
+This architecture, with its current features and planned improvements, is well-suited for applications requiring distributed, trustless task execution in blockchain environments, emphasizing security, scalability, and verifiability throughout the process.
 
-The validated response is then sent back to the Task Manager, which delivers the final response to the Job Creator, completing the task lifecycle. Operators register with the Registry and AVS, having already staked in the Eigen Layer to ensure commitment and network integrity.
-
-
+![](./diagrams/KeeperNetworkAVS - Frame 2 (1).png)
 
 
 
