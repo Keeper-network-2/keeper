@@ -78,7 +78,7 @@ make create-job
 
 ![](./diagrams/keepernetwork.png)
 
-This architecture outlines a sophisticated decentralized job execution system, likely designed for blockchain-based applications. At its core, the system separates job creation, task management, execution, and result aggregation into distinct components, allowing for a flexible and scalable workflow.
+This architecture outlines a sophisticated decentralized job execution system. At its core, the system separates job creation, task management, execution, and result aggregation into distinct components, allowing for a flexible and scalable workflow.
 
 The process begins with the JobManager, which creates jobs consisting of multiple tasks. These jobs are then passed to the KeeperNetworkTaskManager, responsible for breaking down jobs into individual tasks and managing their lifecycles. The TaskManager acts as an intermediary, listening for new jobs and allocating tasks to available Keepers at scheduled times.
 
