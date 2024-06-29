@@ -86,10 +86,6 @@ Keepers, the workhorses of the system, execute the assigned tasks and sign their
 
 The final step involves the Aggregator sending the processed data back to the Task Creation smart contract, which updates the task statuses and forwards the results to the original Job Creator. This completes the cycle of job creation, execution, and result reporting.
 
-The workflow begins with the JobManager creating multi-task jobs. These are passed to the KeeperNetworkTaskManager for task breakdown and lifecycle management. The TaskManager then allocates tasks to available Keepers at scheduled times.
-
-Keepers execute assigned tasks, signing results with BLS signatures for security. The Aggregator collects, verifies, and processes these responses before sending the data to the Task Creation smart contract, which updates task statuses and reports results back to the Job Creator.
-
 
 
 ![](./diagrams/KeeperNetworkAVS.jpg)
