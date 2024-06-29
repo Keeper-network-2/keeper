@@ -17,8 +17,9 @@ interface IKeeperNetworkJobManager {
     event JobCreated(
         uint32 indexed jobId,
         string jobType,
-        string contract_add,
-        uint chain_id
+        string gitlink
+        // string contract_add,
+        // uint chain_id
     );
     event JobDeleted(uint32 indexed jobId);
     // event JobEvent(
@@ -43,20 +44,23 @@ interface IKeeperNetworkJobManager {
     }
 
     struct Job {
-        uint32 jobId;
+        uint256 jobId;
         string jobType;
+        string jobDescription;
+        string gitlink;
         string status;
         bytes quorumNumbers;
         uint32 quorumThresholdPercentage;
         uint32 timeframe;
         uint256 blockNumber;
-        string contract_add;
-        uint chain_id;
-        string target_fnc;
+        // Removed: string contract_add;
+        // Removed: uint chain_id;
+        // Removed: string target_fnc;
     }
 
     // FUNCTIONS
     function stake() external payable;
+    function addToStake(address operator, uint256 amount) external payable;
     function withdraw(uint256 amount) external;
     function joobNumber() external view returns (uint32);
     // function raiseAndResolveChallenge(
@@ -67,13 +71,12 @@ interface IKeeperNetworkJobManager {
     // ) external;
     function createJob(
         string calldata jobType,
+        string calldata jobDescription,
+        string calldata gitlink,
         string calldata status,
         bytes calldata quorumNumbers,
         uint32 quorumThresholdPercentage,
-        uint32 timeframe,
-        string calldata contract_add,
-        uint chain_id,
-        string calldata target_fnc
+        uint32 timeframe
     ) external;
     function deleteJob(uint32 jobId) external;
     function updateJobStatus(uint32 jobId, string calldata status) external;
