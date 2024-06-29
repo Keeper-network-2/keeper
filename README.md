@@ -100,13 +100,14 @@ For more technical insights, [click here!](https://mirror.xyz/0x328f573aB35557d5
 YouTube: [Keeper Network 2.0](https://www.youtube.com/playlist?list=PLINrQiiidP8Lj7oWX3KSgXRYX3m2bPedu)
 
 ## To Do
+
 It's important to note that several key features are still in development:
 
-Metrics for monitoring operator health: This will provide insights into the performance and reliability of the Keepers.
+- **Metrics for monitoring operator health:** This will provide insights into the performance and reliability of the Keepers.
 
-JobURL implementation: This feature will allow the system to retrieve job details directly from the job creator, potentially enhancing flexibility and reducing on-chain data storage.
+- **JobURL implementation:** This feature will allow the system to retrieve job details directly from the job creator, potentially enhancing flexibility and reducing on-chain data storage.
 
-P2P network among operators: This addition will enable direct communication between Keepers, which could improve efficiency and resilience of the system.
+- **P2P network among operators:** This addition will enable direct communication between Keepers, which could improve efficiency and resilience of the system.
 
 These upcoming features will likely enhance the system's robustness, scalability, and decentralization. The metrics will aid in system management, the JobURL will streamline job distribution, and the P2P network will foster a more interconnected and resilient operator ecosystem.
 
