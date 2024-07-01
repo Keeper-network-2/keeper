@@ -360,7 +360,7 @@ contract KeeperNetworkDeployer is Script, Utils {
 
         keeperNetworkJobManager = new KeeperNetworkJobManager();
 
-        keeperNetworkProxyAdmin.upgradeAndCall();
+        // keeperNetworkProxyAdmin.upgradeAndCall();
 
         // WRITE JSON DATA
         string memory parent_object = "parent object";

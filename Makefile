@@ -119,7 +119,7 @@ start-task-manager: ##
 
 run-plugin: ## 
 	go run plugin/cmd/main.go --config config-files/operator.anvil.yaml
------------------------------: ## 
+-----------------------------: ##
 _____HELPER_____: ## 
 
 create-job:
