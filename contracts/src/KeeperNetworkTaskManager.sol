@@ -14,42 +14,41 @@ import "./IKeeperNetworkTaskManager.sol";
 
 contract KeeperNetworkTaskManager is Initializable,
     OwnableUpgradeable,
-    Pausable,
-    IKeeperNetworkTaskManager
+    Pausable
 {
-    // EVENTS - all declared in the interface
-    // event TaskCreated(uint32 indexed taskId, uint32 indexed jobId, string taskType);
-    // event TaskDeleted(uint32 indexed taskId);
-    // event TaskStatusUpdated(uint32 indexed taskId, string status);
-    // event TaskAssigned(uint32 indexed taskId, address operator);
-    // event TaskCompleted(uint32 indexed taskId);
-    // event TaskResponded(
-    //     TaskResponse taskResponse,
-    //     TaskResponseMetadata taskResponseMetadata
-    // );
-    // event TaskChallengedSuccessfully(
-    //     uint32 indexed taskId,
-    //     address indexed challenger
-    // );
+    // EVENTS
+    event TaskCreated(uint32 indexed taskId, uint32 indexed jobId, string taskType);
+    event TaskDeleted(uint32 indexed taskId);
+    event TaskStatusUpdated(uint32 indexed taskId, string status);
+    event TaskAssigned(uint32 indexed taskId, address operator);
+    event TaskCompleted(uint32 indexed taskId);
+    event TaskResponded(
+        TaskResponse taskResponse,
+        TaskResponseMetadata taskResponseMetadata
+    );
+    event TaskChallengedSuccessfully(
+        uint32 indexed taskId,
+        address indexed challenger
+    );
 
-    // STRUCTS - all declared in the interface
-    // struct Task {
-    //     uint32 taskId;
-    //     uint32 jobId;
-    //     string taskType;
-    //     string status;
-    //     uint256 blockNumber;
-    // }
+    // STRUCTS
+    struct Task {
+        uint32 taskId;
+        uint32 jobId;
+        string taskType;
+        string status;
+        uint256 blockNumber;
+    }
 
-    // struct TaskResponse {
-    //     uint32 referenceTaskId;
-    //     uint256 numberSquared;
-    // }
+    struct TaskResponse {
+        uint32 referenceTaskId;
+        uint256 numberSquared;
+    }
 
-    // struct TaskResponseMetadata {
-    //     uint256 taskResponsedBlock;
-    //     bytes32 hashOfNonSigners;
-    // }
+    struct TaskResponseMetadata {
+        uint256 taskResponsedBlock;
+        bytes32 hashOfNonSigners;
+    }
 
     // STATE VARIABLES
     uint32 public immutable TASK_RESPONSE_WINDOW_BLOCK;
