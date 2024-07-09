@@ -20,7 +20,7 @@ import (
     "github.com/joho/godotenv"
     blst "github.com/supranational/blst/bindings/go"
     "github.com/Keeper-network-2/keeper/keeper"
-    "github.com/Keeper-network-2/keeper/aggregator"
+    //"github.com/Keeper-network-2/keeper/aggregator"
     /* "github.com/yourorg/yourproject/logging"
     "github.com/yourorg/yourproject/metrics" */
 )

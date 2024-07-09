@@ -154,7 +154,7 @@ func (tm *TaskManager) scheduleTasks(job JobCreatedEvent) error {
 	}
 
 	for i, task := range job.Tasks {
-		delay := time.Duration(interval*i) * time.Second
+		delay := time.Duration(interval*uint32(i)) * time.Second
 		cronSchedule := fmt.Sprintf("@every %ds", delay)
 
 		err := c.AddFunc(cronSchedule, func() {
