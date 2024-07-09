@@ -11,7 +11,7 @@ import "@eigenlayer-middleware/src/libraries/BN254.sol";
 import "./IKeeperNetworkJobManager.sol";
 
 
-contract KeeperNetworkJobManager is 
+contract JobCreator is 
     IKeeperNetworkJobManager
 {
     address public owner;
@@ -29,30 +29,29 @@ contract KeeperNetworkJobManager is
 
     function createJob(
         string calldata jobType,
-        string calldata jobDescription,
-        string calldata gitlink,
         string calldata status,
         bytes calldata quorumNumbers,
         uint32 quorumThresholdPercentage,
-        uint32 timeframe
+        uint32 timeframe,
+        string calldata contract_add,
+        uint chain_id,
+        string calldata target_fnc
     ) external override {
         jobCount++;
         jobs[jobCount] = Job({
             jobId: jobCount,
             jobType: jobType,
-            jobDescription: jobDescription,
-            gitlink: gitlink,
             status: status,
             quorumNumbers: quorumNumbers,
             quorumThresholdPercentage: quorumThresholdPercentage,
             timeframe: timeframe,
-            blockNumber: block.number
-            // contract_add: "",
-            // chain_id: 0,
-            // target_fnc: ""
+            blockNumber: block.number,
+            contract_add: contract_add,
+            chain_id: chain_id,
+            target_fnc: target_fnc
         });
 
-        emit JobCreated(jobCount, jobType, gitlink);
+        emit JobCreated(jobCount, jobType, contract_add, chain_id);
     }
 
     function deleteJob(uint32 jobId) external override onlyOwner {
@@ -69,10 +68,6 @@ contract KeeperNetworkJobManager is
 
     function stake() external payable override {
         emit Staked(msg.sender, msg.value);
-    }
-
-    function addToStake(address operator, uint256 amount) external payable override {
-        emit Staked(operator, amount);
     }
 
     function withdraw(uint256 amount) external override {
