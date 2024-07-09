@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@eigenlayer/contracts/permissions/PauserRegistry.sol";
 import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
 import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
-import {IRewardsCoordinator} from "eigenlayer-contracts/src/contracts/interfaces/IRewardsCoordinator.sol";
 import {IStrategyManager, IStrategy} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
 import {ISlasher} from "@eigenlayer/contracts/interfaces/ISlasher.sol";
 import {StrategyBaseTVLLimits} from "@eigenlayer/contracts/strategies/StrategyBaseTVLLimits.sol";
@@ -19,14 +18,13 @@ import {StakeRegistry} from "@eigenlayer-middleware/src/StakeRegistry.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {KeeperNetworkServiceManager, IServiceManager} from "../src/KeeperNetworkServiceManager.sol";
-import {IKeeperNetworkTaskManager} from "../src/IKeeperNetworkTaskManager.sol";
 import {KeeperNetworkTaskManager} from "../src/KeeperNetworkTaskManager.sol";
+import {IKeeperNetworkTaskManager} from "../src/IKeeperNetworkTaskManager.sol";
+import {JobCreator} from "../src/Jobmanager.sol";
 import {IKeeperNetworkJobManager} from "../src/IKeeperNetworkJobManager.sol";
-import {KeeperNetworkJobManager} from "../src/KeeperNetworkJobManager.sol";
 import "../src/ERC20Mock.sol";
 
 import {Utils} from "./utils/Utils.sol";
-
 
 import "forge-std/Test.sol";
 import "forge-std/Script.sol";
@@ -72,8 +70,8 @@ contract KeeperNetworkDeployer is Script, Utils {
     KeeperNetworkTaskManager public keeperNetworkTaskManager;
     IKeeperNetworkTaskManager public keeperNetworkTaskManagerImplementation;
 
-    KeeperNetworkJobManager public keeperNetworkJobManager;
-    IKeeperNetworkJobManager public keeperNetworkJobManagerImplementation;
+    JobCreator public jobManager;
+    IKeeperNetworkJobManager public jobManagerImplementation;
 
     function run() external {
         // Eigenlayer contracts
@@ -96,9 +94,6 @@ contract KeeperNetworkDeployer is Script, Utils {
         StrategyBaseTVLLimits baseStrategyImplementation = StrategyBaseTVLLimits(
             stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.baseStrategyImplementation")
         );
-        IRewardsCoordinator rewardsCoordinator = IRewardsCoordinator(
-            stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.rewardsCoordinator")
-        );
 
         address keeperNetworkCommunityMultisig = msg.sender;
         address keeperNetworkPauser = msg.sender;
@@ -113,7 +108,6 @@ contract KeeperNetworkDeployer is Script, Utils {
         _deployKeeperNetworkContracts(
             delegationManager,
             avsDirectory,
-            rewardsCoordinator,
             erc20MockStrategy,
             keeperNetworkCommunityMultisig,
             keeperNetworkPauser
@@ -157,7 +151,6 @@ contract KeeperNetworkDeployer is Script, Utils {
     function _deployKeeperNetworkContracts(
         IDelegationManager delegationManager,
         IAVSDirectory avsDirectory,
-        IRewardsCoordinator rewardsCoordinator,
         IStrategy strat,
         address keeperNetworkCommunityMultisig,
         address keeperNetworkPauser
@@ -201,7 +194,7 @@ contract KeeperNetworkDeployer is Script, Utils {
                 )
             )
         );
-        keeperNetworkJobManager = KeeperNetworkJobManager(
+        jobManager = JobCreator(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -329,11 +322,9 @@ contract KeeperNetworkDeployer is Script, Utils {
 
         keeperNetworkServiceManagerImplementation = new KeeperNetworkServiceManager(
             avsDirectory,
-            rewardsCoordinator,
             registryCoordinator,
             stakeRegistry,
-            keeperNetworkTaskManagerImplementation,
-            keeperNetworkJobManagerImplementation
+            keeperNetworkTaskManagerImplementation
         );
 
         keeperNetworkProxyAdmin.upgrade(
@@ -358,9 +349,19 @@ contract KeeperNetworkDeployer is Script, Utils {
             )
         );
 
-        keeperNetworkJobManager = new KeeperNetworkJobManager();
+        jobManager = new JobCreator(
+            //registryCoordinator
+        );
 
-        // keeperNetworkProxyAdmin.upgradeAndCall();
+        /* keeperNetworkProxyAdmin.upgradeAndCall(
+            TransparentUpgradeableProxy(payable(address(jobManager))),
+            address(jobManagerImplementation),
+            abi.encodeWithSelector(
+                jobManager.initialize.selector,
+                keeperNetworkPauserReg,
+                keeperNetworkCommunityMultisig
+            )
+        ); */
 
         // WRITE JSON DATA
         string memory parent_object = "parent object";
@@ -372,6 +373,8 @@ contract KeeperNetworkDeployer is Script, Utils {
         vm.serializeAddress(deployed_addresses, "keeperNetworkServiceManagerImplementation", address(keeperNetworkServiceManagerImplementation));
         vm.serializeAddress(deployed_addresses, "keeperNetworkTaskManager", address(keeperNetworkTaskManager));
         vm.serializeAddress(deployed_addresses, "keeperNetworkTaskManagerImplementation", address(keeperNetworkTaskManagerImplementation));
+        vm.serializeAddress(deployed_addresses, "jobManager", address(jobManager));
+        vm.serializeAddress(deployed_addresses, "jobManagerImplementation", address(jobManagerImplementation));
         vm.serializeAddress(deployed_addresses, "registryCoordinator", address(registryCoordinator));
         vm.serializeAddress(deployed_addresses, "registryCoordinatorImplementation", address(registryCoordinatorImplementation));
         string memory deployed_addresses_output = vm.serializeAddress(deployed_addresses, "operatorStateRetriever", address(operatorStateRetriever));
