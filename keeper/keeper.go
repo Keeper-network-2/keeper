@@ -1,28 +1,17 @@
 package main
 
 import (
-    "context"
-    "crypto/ecdsa"
     "encoding/json"
     "fmt"
-    "io/ioutil"
     "log"
-    "math/big"
     "net/http"
     "os"
-    "time"
-    "bytes"
+    "io/ioutil"
 
-    "github.com/ethereum/go-ethereum/common"
-    "github.com/ethereum/go-ethereum/crypto"
-    "github.com/ethereum/go-ethereum/ethclient"
-    "github.com/ethereum/go-ethereum/core/types"
     "github.com/joho/godotenv"
     blst "github.com/supranational/blst/bindings/go"
-    "github.com/Keeper-network-2/keeper/keeper"
-    //"github.com/Keeper-network-2/keeper/aggregator"
-    /* "github.com/yourorg/yourproject/logging"
-    "github.com/yourorg/yourproject/metrics" */
+    // "github.com/Keeper-network-2/keeper/keeper"
+    "github.com/Keeper-network-2/keeper/aggregator/rpc"
 )
 
 type JobCreatedEvent struct {
@@ -32,7 +21,9 @@ type JobCreatedEvent struct {
     JobURL         string `json:"jobURL"`
 }
 
-var rpcClient *operator.AggregatorRpcClient
+
+
+var rpcClient *aggregator_rpc.AggregatorRpcClient
 
 func main() {
     // Load environment variables from .env file
@@ -42,7 +33,7 @@ func main() {
     }
 
     aggregatorIpPortAddr := os.Getenv("AGGREGATOR_IP_PORT")
-    rpcClient, err = operator.NewAggregatorRpcClient(aggregatorIpPortAddr)
+    rpcClient, err = aggregator_rpc.NewAggregatorRpcClient(aggregatorIpPortAddr)
     if (err != nil) {
         log.Fatalf("Error creating RPC client: %v", err)
     }
@@ -54,7 +45,7 @@ func main() {
 
 func executeTaskHandler(w http.ResponseWriter, r *http.Request) {
     var job JobCreatedEvent
-    if (err := json.NewDecoder(r.Body).Decode(&job)) != nil {
+    if err := json.NewDecoder(r.Body).Decode(&job); err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
