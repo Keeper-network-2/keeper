@@ -27,6 +27,8 @@ contract JobCreator is
         owner = msg.sender;
     }
 
+    // EVM STACK OVERFLOW ERROR
+    // This function single-handedly causes the error. Due to this, wherever this is used, the error follows.
     function createJob(
         string calldata jobType,
         string calldata status,
