@@ -29,31 +29,22 @@ contract JobCreator is
 
     // EVM STACK OVERFLOW ERROR
     // This function single-handedly causes the error. Due to this, wherever this is used, the error follows.
-    function createJob(
-        string calldata jobType,
-        string calldata status,
-        bytes calldata quorumNumbers,
-        uint32 quorumThresholdPercentage,
-        uint32 timeframe,
-        string calldata contract_add,
-        uint chain_id,
-        string calldata target_fnc
-    ) external override {
+    function createJob(JobParams calldata params) external override {
         jobCount++;
         jobs[jobCount] = Job({
             jobId: jobCount,
-            jobType: jobType,
-            status: status,
-            quorumNumbers: quorumNumbers,
-            quorumThresholdPercentage: quorumThresholdPercentage,
-            timeframe: timeframe,
+            jobType: params.jobType,
+            status: params.status,
+            quorumNumbers: params.quorumNumbers,
+            quorumThresholdPercentage: params.quorumThresholdPercentage,
+            timeframe: params.timeframe,
             blockNumber: block.number,
-            contract_add: contract_add,
-            chain_id: chain_id,
-            target_fnc: target_fnc
+            contract_add: params.contract_add,
+            chain_id: params.chain_id,
+            target_fnc: params.target_fnc
         });
 
-        emit JobCreated(jobCount, jobType, contract_add, chain_id);
+        emit JobCreated(jobCount, params.jobType, params.contract_add, params.chain_id);
     }
 
     function deleteJob(uint32 jobId) external override onlyOwner {

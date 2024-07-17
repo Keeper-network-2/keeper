@@ -24,25 +24,18 @@ contract CreateJobScript is Script {
         jobCreator.stake{value: MINIMUM_STAKE}();
         console.log("Staked 1 ETH for the user");
 
-        string memory jobType = "Example Job Type";
-        string memory status = "Open";
-        bytes memory quorumNumbers = abi.encodePacked(uint8(1), uint8(2), uint8(3)); // Example quorum numbers
-        uint32 quorumThresholdPercentage = 70; // Example quorum threshold percentage
-        uint32 timeframe = 100; // Example timeframe
-        string memory contract_add = "0x1234567890123456789012345678901234567890"; // Example contract address
-        uint chain_id = 1; // Example chain ID (1 for Ethereum mainnet)
-        string memory target_fnc = "exampleFunction"; // Example target function
+        IKeeperNetworkJobManager.JobParams memory jobParams = IKeeperNetworkJobManager.JobParams({
+            jobType: "Example Job Type",
+            status: "Open",
+            quorumNumbers: abi.encodePacked(uint8(1), uint8(2), uint8(3)), // Example quorum numbers
+            quorumThresholdPercentage: 70, // Example quorum threshold percentage
+            timeframe: 100, // Example timeframe
+            contract_add: "0x1234567890123456789012345678901234567890", // Example contract address
+            chain_id: 1, // Example chain ID (1 for Ethereum mainnet)
+            target_fnc: "exampleFunction" // Example target function
+        });
 
-        jobCreator.createJob(
-            jobType,
-            status,
-            quorumNumbers,
-            quorumThresholdPercentage,
-            timeframe,
-            contract_add,
-            chain_id,
-            target_fnc
-        );
+        jobCreator.createJob(jobParams);
 
         console.log("Job created successfully");
 
