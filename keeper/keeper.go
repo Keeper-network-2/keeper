@@ -1,4 +1,4 @@
-package main
+package keeper
 
 import (
     "context"
@@ -9,99 +9,228 @@ import (
     "log"
     "math/big"
     "net/http"
-    "os"
-    "time"
-    "bytes"
+    "strings"
 
+    "github.com/ethereum/go-ethereum/accounts/abi"
     "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/core/types"
     "github.com/ethereum/go-ethereum/crypto"
     "github.com/ethereum/go-ethereum/ethclient"
-    "github.com/ethereum/go-ethereum/core/types"
-    "github.com/joho/godotenv"
-    blst "github.com/supranational/blst/bindings/go"
-    "github.com/Keeper-network-2/keeper/keeper"
-    //"github.com/Keeper-network-2/keeper/aggregator"
-    /* "github.com/yourorg/yourproject/logging"
-    "github.com/yourorg/yourproject/metrics" */
+    "github.com/Keeper-network-2/keeper/aggregator"
 )
 
-type JobCreatedEvent struct {
-    JobID          uint32 `json:"jobID"`
-    JobType        string `json:"jobType"`
-    JobDescription string `json:"jobDescription"`
-    JobURL         string `json:"jobURL"`
+type Keeper struct {
+    ethClient        *ethclient.Client
+    privateKey       *ecdsa.PrivateKey
+    publicKey        *ecdsa.PublicKey
+    address          common.Address
+    aggregatorClient *AggregatorRpcClient
 }
 
-var rpcClient *operator.AggregatorRpcClient
+type Task struct {
+    JobID        uint32 `json:"jobID"`
+    TaskID       uint32 `json:"taskID"`
+    ChainID      uint   `json:"chainID"`
+    ContractAddr string `json:"contractAddr"`
+    TargetFunc   string `json:"targetFunc"`
+}
 
-func main() {
-    // Load environment variables from .env file
-    err := godotenv.Load()
-    if (err != nil) {
-        log.Fatal("Error loading .env file")
+func NewKeeper(ethURL, aggregatorAddr, privateKeyHex string) (*Keeper, error) {
+    ethClient, err := ethclient.Dial(ethURL)
+    if err != nil {
+        return nil, fmt.Errorf("failed to connect to Ethereum client: %v", err)
     }
 
-    aggregatorIpPortAddr := os.Getenv("AGGREGATOR_IP_PORT")
-    rpcClient, err = operator.NewAggregatorRpcClient(aggregatorIpPortAddr)
-    if (err != nil) {
-        log.Fatalf("Error creating RPC client: %v", err)
+    privateKey, err := crypto.HexToECDSA(privateKeyHex)
+    if err != nil {
+        return nil, fmt.Errorf("failed to parse private key: %v", err)
     }
 
-    http.HandleFunc("/executeTask", executeTaskHandler)
-    log.Println("Starting operator server on port 8081...")
+    publicKey := privateKey.Public().(*ecdsa.PublicKey)
+    address := crypto.PubkeyToAddress(*publicKey)
+
+    aggregatorClient, err := NewAggregatorRpcClient(aggregatorAddr)
+    if err != nil {
+        return nil, fmt.Errorf("failed to create aggregator client: %v", err)
+    }
+
+    return &Keeper{
+        ethClient:        ethClient,
+        privateKey:       privateKey,
+        publicKey:        publicKey,
+        address:          address,
+        aggregatorClient: aggregatorClient,
+    }, nil
+}
+
+func (k *Keeper) Start() {
+    http.HandleFunc("/executeTask", k.executeTaskHandler)
+    log.Println("Starting keeper server on port 8081...")
     log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
-func executeTaskHandler(w http.ResponseWriter, r *http.Request) {
-    var job JobCreatedEvent
-    if (err := json.NewDecoder(r.Body).Decode(&job)) != nil {
+func (k *Keeper) executeTaskHandler(w http.ResponseWriter, r *http.Request) {
+    var task Task
+    if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
+    log.Printf("Received task: %+v\n", task)
+    
+    result, err := k.executeTask(task)
+    if err != nil {
+        log.Printf("Error executing task: %v", err)
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 
-    log.Printf("Received task: %+v\n", job)
+    signedResult, err := k.signResult(result)
+    if err != nil {
+        log.Printf("Error signing result: %v", err)
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 
-    // Perform task execution logic here
-    executeJob(job.JobID)
+    k.sendToAggregator(task.JobID, signedResult)
 
     w.WriteHeader(http.StatusOK)
 }
 
-func executeJob(jobID uint32) {
-    script, err := ioutil.ReadFile("script.js")
-    if (err != nil) {
-        log.Printf("Error reading script file: %v", err)
-        return
+func (k *Keeper) executeTask(task Task) ([]byte, error) {
+    contractABI, err := k.getContractABI(task.ContractAddr)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get contract ABI: %v", err)
     }
 
-    encodedData := string(script)
-    log.Printf("Encoded data from script: %s", encodedData)
+    result, err := k.executeTargetFunction(task.ContractAddr, task.TargetFunc, contractABI)
+    if err != nil {
+        return nil, fmt.Errorf("failed to execute target function: %v", err)
+    }
 
-    signedData := signJobResult(encodedData)
-    sendSignedResultToAggregator(signedData, jobID)
+    receipt, err := k.sendTransaction(common.HexToAddress(task.ContractAddr), result)
+    if err != nil {
+        return nil, fmt.Errorf("failed to send transaction: %v", err)
+    }
+
+    log.Printf("Transaction receipt: %+v", receipt)
+
+    return result, nil
 }
 
-func signJobResult(encodedData string) string {
-    privateKey := os.Getenv("BLS_PRIVATE_KEY")
+func (k *Keeper) executeTargetFunction(contractAddr, targetFunc string, contractABI *abi.ABI) ([]byte, error) {
+    log.Printf("Executing function %s on contract %s", targetFunc, contractAddr)
 
-    // Sign the encoded data using BLS
-    privKey := blst.SecretKey{}
-    privKey.DeserializeHexStr(privateKey)
+    address := common.HexToAddress(contractAddr)
 
-    message := []byte(encodedData)
-    signature := privKey.Sign(message, nil)
+    method, exist := contractABI.Methods[targetFunc]
+    if !exist {
+        return nil, fmt.Errorf("method %s not found in contract ABI", targetFunc)
+    }
 
-    signedData := signature.Serialize()
-    return fmt.Sprintf("%x", signedData)
+    data, err := method.Inputs.Pack()
+    if err != nil {
+        return nil, fmt.Errorf("failed to pack method inputs: %v", err)
+    }
+
+    result, err := k.ethClient.CallContract(context.Background(), ethereum.CallMsg{
+        From: k.address,
+        To:   &address,
+        Data: data,
+    }, nil)
+    if err != nil {
+        return nil, fmt.Errorf("failed to call contract: %v", err)
+    }
+
+    return result, nil
 }
 
-func sendSignedResultToAggregator(signedData string, jobID uint32) {
-    // Construct the signed task response
+func (k *Keeper) getContractABI(contractAddr string) (*abi.ABI, error) {
+    apiURL := fmt.Sprintf("https://api.etherscan.io/api?module=contract&action=getabi&address=%s&apikey=RU9BRI2G4CMTK98GEYSDUI1VXJFHBQY5F6", contractAddr)
+
+    resp, err := http.Get(apiURL)
+    if err != nil {
+        return nil, fmt.Errorf("failed to fetch ABI: %v", err)
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read response body: %v", err)
+    }
+
+    var result struct {
+        Status  string `json:"status"`
+        Message string `json:"message"`
+        Result  string `json:"result"`
+    }
+
+    err = json.Unmarshal(body, &result)
+    if err != nil {
+        return nil, fmt.Errorf("failed to parse API response: %v", err)
+    }
+
+    if result.Status != "1" {
+        return nil, fmt.Errorf("API request failed: %s", result.Message)
+    }
+
+    parsedABI, err := abi.JSON(strings.NewReader(result.Result))
+    if err != nil {
+        return nil, fmt.Errorf("failed to parse ABI JSON: %v", err)
+    }
+
+    return &parsedABI, nil
+}
+
+func (k *Keeper) sendTransaction(to common.Address, data []byte) (*types.Receipt, error) {
+    nonce, err := k.ethClient.PendingNonceAt(context.Background(), k.address)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get nonce: %v", err)
+    }
+
+    gasPrice, err := k.ethClient.SuggestGasPrice(context.Background())
+    if err != nil {
+        return nil, fmt.Errorf("failed to suggest gas price: %v", err)
+    }
+
+    tx := types.NewTransaction(nonce, to, big.NewInt(0), 300000, gasPrice, data)
+
+    chainID, err := k.ethClient.NetworkID(context.Background())
+    if err != nil {
+        return nil, fmt.Errorf("failed to get chain ID: %v", err)
+    }
+
+    signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), k.privateKey)
+    if err != nil {
+        return nil, fmt.Errorf("failed to sign transaction: %v", err)
+    }
+
+    err = k.ethClient.SendTransaction(context.Background(), signedTx)
+    if err != nil {
+        return nil, fmt.Errorf("failed to send transaction: %v", err)
+    }
+
+    receipt, err := k.ethClient.TransactionReceipt(context.Background(), signedTx.Hash())
+    if err != nil {
+        return nil, fmt.Errorf("failed to get transaction receipt: %v", err)
+    }
+
+    return receipt, nil
+}
+
+func (k *Keeper) signResult(result []byte) ([]byte, error) {
+    hash := crypto.Keccak256Hash(result)
+    signature, err := crypto.Sign(hash.Bytes(), k.privateKey)
+    if err != nil {
+        return nil, fmt.Errorf("failed to sign result: %v", err)
+    }
+    
+    return signature, nil
+}
+
+func (k *Keeper) sendToAggregator(jobID uint32, signedResult []byte) {
     signedTaskResponse := &aggregator.SignedTaskResponse{
         JobID:      jobID,
-        SignedData: signedData,
+        SignedData: signedResult,
     }
-
-    // Send the signed task response to the aggregator
-    rpcClient.SendSignedTaskResponseToAggregator(signedTaskResponse)
+    k.aggregatorClient.SendSignedTaskResponseToAggregator(signedTaskResponse)
 }

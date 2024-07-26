@@ -20,7 +20,7 @@ import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import {KeeperNetworkServiceManager, IServiceManager} from "../src/KeeperNetworkServiceManager.sol";
 import {KeeperNetworkTaskManager} from "../src/KeeperNetworkTaskManager.sol";
 import {IKeeperNetworkTaskManager} from "../src/IKeeperNetworkTaskManager.sol";
-import {JobCreator} from "../src/Jobmanager.sol";
+import {JobCreator} from "../src/KeeperNetworkJobManager.sol";
 import {IKeeperNetworkJobManager} from "../src/IKeeperNetworkJobManager.sol";
 import "../src/ERC20Mock.sol";
 

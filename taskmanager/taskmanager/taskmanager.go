@@ -10,15 +10,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robfig/cron"
+	"github.com/robfig/cron/v3"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/Keeper/contracts" // Replace with the actual path to your generated contract bindings
 )
 
-const JobCreatedEventSignature = "JobCreated(uint32,string,string,string)"
+const JobCreatedEventSignature = "JobCreated(uint32,string,string,uint256)"
 
 type TaskManager struct {
 	client        *ethclient.Client
@@ -27,17 +29,21 @@ type TaskManager struct {
 }
 
 type Task struct {
-	TaskID   uint32 `json:"taskID"`
-	TaskType string `json:"taskType"`
+	JobID        uint32 `json:"jobID"`
+	TaskID       uint32 `json:"taskID"`
+	ChainID      uint   `json:"chainID"`
+	ContractAddr string `json:"contractAddr"`
+	TargetFunc   string `json:"targetFunc"`
 }
 
-type JobCreatedEvent struct {
-	JobID          uint32 `json:"jobID"`
-	JobType        string `json:"jobType"`
-	JobDescription string `json:"jobDescription"`
-	JobURL         string `json:"jobURL"`
-	Tasks          []Task `json:"tasks"`
-	Timeframe      uint32 `json:"timeframe"`
+type Job struct {
+	JobID        uint32   `json:"jobID"`
+	JobType      string   `json:"jobType"`
+	ContractAddr string   `json:"contractAddr"`
+	ChainID      uint     `json:"chainID"`
+	TargetFunc   string   `json:"targetFunc"`
+	Timeframe    uint32   `json:"timeframe"`
+	Tasks        []string `json:"tasks"`
 }
 
 func NewTaskManager(clientURL string, contractAddr string) (*TaskManager, error) {
@@ -73,94 +79,105 @@ func (tm *TaskManager) ListenForEvents() {
 			log.Fatalf("Subscription error: %v", err)
 		case vLog := <-logs:
 			log.Printf("Received JobCreated event log: %+v\n", vLog)
-			tm.AllocateTasks(vLog)
+			tm.ProcessJob(vLog)
 		}
 	}
 }
 
-func (tm *TaskManager) AllocateTasks(vLog types.Log) {
-	// Decode the event log
-	var jobCreatedEvent JobCreatedEvent
-	data := vLog.Data
-	if err := decodeEventData(data, &jobCreatedEvent); err != nil {
-		log.Printf("Failed to decode event data: %v", err)
+func (tm *TaskManager) ProcessJob(vLog types.Log) {
+	var job Job
+	err := tm.decodeJobCreatedEvent(vLog, &job)
+	if err != nil {
+		log.Printf("Failed to decode JobCreated event: %v", err)
 		return
 	}
 
-	log.Printf("Decoded JobCreated event: %+v\n", jobCreatedEvent)
+	log.Printf("Decoded Job: %+v\n", job)
 
-	// Schedule tasks to send to operator
-	err := tm.scheduleTasks(jobCreatedEvent)
+	err = tm.scheduleTasks(job)
 	if err != nil {
 		log.Printf("Failed to schedule tasks: %v", err)
 	}
 }
 
-func decodeEventData(data []byte, event *JobCreatedEvent) error {
-	if len(data) < 160 {
+func (tm *TaskManager) decodeJobCreatedEvent(vLog types.Log, job *Job) error {
+	if len(vLog.Data) < 128 {
 		return fmt.Errorf("invalid event data length")
 	}
 
-	// Decode the uint32 jobID
-	jobID := new(big.Int).SetBytes(data[:32]).Uint64()
-	event.JobID = uint32(jobID)
+	job.JobID = uint32(new(big.Int).SetBytes(vLog.Data[:32]).Uint64())
+	job.JobType = string(vLog.Data[32:64])
+	job.ContractAddr = common.BytesToAddress(vLog.Data[64:96]).Hex()
+	job.ChainID = uint(new(big.Int).SetBytes(vLog.Data[96:128]).Uint64())
 
-	// Decode the timeframe
-	timeframe := new(big.Int).SetBytes(data[32:64]).Uint64()
-	event.Timeframe = uint32(timeframe)
-
-	// Decode the offsets
-	offset0 := new(big.Int).SetBytes(data[64:96]).Uint64()
-	offset1 := new(big.Int).SetBytes(data[96:128]).Uint64()
-	offset2 := new(big.Int).SetBytes(data[128:160]).Uint64()
-
-	// Decode jobType
-	jobTypeLength := new(big.Int).SetBytes(data[offset0 : offset0+32]).Uint64()
-	event.JobType = string(data[offset0+32 : offset0+32+jobTypeLength])
-
-	// Decode jobDescription
-	jobDescriptionLength := new(big.Int).SetBytes(data[offset1 : offset1+32]).Uint64()
-	event.JobDescription = string(data[offset1+32 : offset1+32+jobDescriptionLength])
-
-	// Decode jobURL
-	jobURLLength := new(big.Int).SetBytes(data[offset2 : offset2+32]).Uint64()
-	event.JobURL = string(data[offset2+32 : offset2+32+jobURLLength])
-
-	// Decode tasks
-	tasksOffset := new(big.Int).SetBytes(data[160:192]).Uint64()
-	tasksLength := new(big.Int).SetBytes(data[tasksOffset : tasksOffset+32]).Uint64()
-	tasksData := data[tasksOffset+32 : tasksOffset+32+tasksLength]
-
-	// Parse tasks JSON
-	if err := json.Unmarshal(tasksData, &event.Tasks); err != nil {
-		return fmt.Errorf("failed to unmarshal tasks JSON: %v", err)
+	// Fetch additional job details from the contract
+	jobDetails, err := tm.fetchJobDetails(job.JobID)
+	if err != nil {
+		return err
 	}
+
+	job.TargetFunc = jobDetails.TargetFunc
+	job.Timeframe = jobDetails.Timeframe
+	job.Tasks = jobDetails.Tasks
 
 	return nil
 }
 
-func (tm *TaskManager) scheduleTasks(job JobCreatedEvent) error {
-	// Create a cron job to send tasks to operator at equal intervals
+func (tm *TaskManager) fetchJobDetails(jobID uint32) (*Job, error) {
+	// Implement contract call to fetch job details
+	// This is a placeholder and needs to be implemented based on your contract
+	return &Job{
+		TargetFunc: "exampleFunction",
+		Timeframe:  3600, // 1 hour in seconds
+		Tasks:      []string{"task1", "task2", "task3"},
+	}, nil
+}
+
+func (tm *TaskManager) scheduleTasks(job Job) error {
 	c := cron.New()
 
-	// Calculate the interval between tasks
-	if len(job.Tasks) == 0 {
-		return fmt.Errorf("no tasks to schedule")
+	// Create an instance of the KeeperNetworkTaskManager contract
+	taskManager, err := contracts.NewKeeperNetworkTaskManager(tm.contractAddr, tm.client)
+	if err != nil {
+		return fmt.Errorf("failed to instantiate KeeperNetworkTaskManager contract: %v", err)
 	}
 
-	interval := job.Timeframe / uint32(len(job.Tasks))
-	if interval == 0 {
-		return fmt.Errorf("timeframe too short for the number of tasks")
+	numTasks := len(job.Tasks)
+	if numTasks == 0 {
+		return fmt.Errorf("no tasks defined for job %d", job.JobID)
 	}
 
-	for i, task := range job.Tasks {
-		delay := time.Duration(interval*uint32(i)) * time.Second
-		cronSchedule := fmt.Sprintf("@every %ds", delay)
+	interval := time.Duration(job.Timeframe/uint32(numTasks)) * time.Second
 
-		err := c.AddFunc(cronSchedule, func() {
-			err := sendTaskToOperator(task)
+	for i, taskType := range job.Tasks {
+		taskID := uint32(i + 1)
+		delay := time.Duration(i) * interval
+		
+		task := Task{
+			JobID:        job.JobID,
+			TaskID:       taskID,
+			ChainID:      job.ChainID,
+			ContractAddr: job.ContractAddr,
+			TargetFunc:   job.TargetFunc,
+		}
+
+		// Create the task in the smart contract
+		tx, err := taskManager.CreateTask(nil, job.JobID, taskID, taskType, "Scheduled")
+		if err != nil {
+			return fmt.Errorf("failed to create task in smart contract: %v", err)
+		}
+
+		// Wait for the transaction to be mined
+		_, err = bind.WaitMined(context.Background(), tm.client, tx)
+		if err != nil {
+			return fmt.Errorf("failed to wait for CreateTask transaction to be mined: %v", err)
+		}
+
+		// Schedule the task execution
+		_, err = c.AddFunc(fmt.Sprintf("@every %v", delay), func() {
+			err := sendTaskToKeeper(task)
 			if err != nil {
-				log.Printf("Failed to send task to operator: %v", err)
+				log.Printf("Failed to send task to keeper: %v", err)
 			}
 		})
 
@@ -170,12 +187,10 @@ func (tm *TaskManager) scheduleTasks(job JobCreatedEvent) error {
 	}
 
 	c.Start()
-	defer c.Stop()
-
 	return nil
 }
 
-func sendTaskToOperator(task Task) error {
+func sendTaskToKeeper(task Task) error {
 	taskJSON, err := json.Marshal(task)
 	if err != nil {
 		return err
