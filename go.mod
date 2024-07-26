@@ -1,4 +1,4 @@
-module github.com/Layr-Labs/incredible-squaring-avs
+module github.com/Keeper-network-2/keeper
 
 go 1.21
 
@@ -19,6 +19,7 @@ require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
+	github.com/Layr-Labs/incredible-squaring-avs v0.0.0-20240514045747-90d3254784d9 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect

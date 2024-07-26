@@ -55,6 +55,17 @@ interface IKeeperNetworkJobManager {
         string target_fnc;
     }
 
+    struct JobParams {
+        string jobType;
+        string status;
+        bytes quorumNumbers;
+        uint32 quorumThresholdPercentage;
+        uint32 timeframe;
+        string contract_add;
+        uint chain_id;
+        string target_fnc;
+    }
+
     // FUNCTIONS
     function stake() external payable;
     function withdraw(uint256 amount) external;
@@ -65,16 +76,7 @@ interface IKeeperNetworkJobManager {
     //     JobResponseMetadata calldata jobResponseMetadata,
     //     BN254.G1Point[] memory pubkeysOfNonSigningOperators
     // ) external;
-    function createJob(
-        string calldata jobType,
-        string calldata status,
-        bytes calldata quorumNumbers,
-        uint32 quorumThresholdPercentage,
-        uint32 timeframe,
-        string calldata contract_add,
-        uint chain_id,
-        string calldata target_fnc
-    ) external;
+    function createJob(JobParams calldata params) external;
     function deleteJob(uint32 jobId) external;
     function updateJobStatus(uint32 jobId, string calldata status) external;
     // function assignJob(uint32 jobId, address operator) external;

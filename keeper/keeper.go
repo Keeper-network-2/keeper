@@ -1,14 +1,11 @@
 package keeper
 
 import (
-    "context"
-    "crypto/ecdsa"
     "encoding/json"
     "fmt"
-    "io/ioutil"
     "log"
-    "math/big"
     "net/http"
+<<<<<<< HEAD
     "strings"
 
     "github.com/ethereum/go-ethereum/accounts/abi"
@@ -17,6 +14,15 @@ import (
     "github.com/ethereum/go-ethereum/crypto"
     "github.com/ethereum/go-ethereum/ethclient"
     "github.com/Keeper-network-2/keeper/aggregator"
+=======
+    "os"
+    "io/ioutil"
+
+    "github.com/joho/godotenv"
+    blst "github.com/supranational/blst/bindings/go"
+    // "github.com/Keeper-network-2/keeper/keeper"
+    "github.com/Keeper-network-2/keeper/aggregator/rpc"
+>>>>>>> origin/agg-rpc
 )
 
 type Keeper struct {
@@ -27,6 +33,7 @@ type Keeper struct {
     aggregatorClient *AggregatorRpcClient
 }
 
+<<<<<<< HEAD
 type Task struct {
     JobID        uint32 `json:"jobID"`
     TaskID       uint32 `json:"taskID"`
@@ -34,6 +41,11 @@ type Task struct {
     ContractAddr string `json:"contractAddr"`
     TargetFunc   string `json:"targetFunc"`
 }
+=======
+
+
+var rpcClient *aggregator_rpc.AggregatorRpcClient
+>>>>>>> origin/agg-rpc
 
 func NewKeeper(ethURL, aggregatorAddr, privateKeyHex string) (*Keeper, error) {
     ethClient, err := ethclient.Dial(ethURL)
@@ -41,9 +53,16 @@ func NewKeeper(ethURL, aggregatorAddr, privateKeyHex string) (*Keeper, error) {
         return nil, fmt.Errorf("failed to connect to Ethereum client: %v", err)
     }
 
+<<<<<<< HEAD
     privateKey, err := crypto.HexToECDSA(privateKeyHex)
     if err != nil {
         return nil, fmt.Errorf("failed to parse private key: %v", err)
+=======
+    aggregatorIpPortAddr := os.Getenv("AGGREGATOR_IP_PORT")
+    rpcClient, err = aggregator_rpc.NewAggregatorRpcClient(aggregatorIpPortAddr)
+    if (err != nil) {
+        log.Fatalf("Error creating RPC client: %v", err)
+>>>>>>> origin/agg-rpc
     }
 
     publicKey := privateKey.Public().(*ecdsa.PublicKey)

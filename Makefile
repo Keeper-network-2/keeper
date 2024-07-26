@@ -1,8 +1,8 @@
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
 .PHONY: help tests
-help:
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+# help:
+# 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 AGGREGATOR_ECDSA_PRIV_KEY=0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
 
@@ -19,7 +19,7 @@ DEPLOYMENT_FILES_DIR=contracts/script/output/${CHAINID}
 ___CONTRACTS___: ## 
 
 build-contracts: ## builds all contracts
-	cd contracts && forge build
+	cd contracts && forge build --optimize
 
 deploy-eigenlayer-contracts-to-anvil-and-save-state: ## Deploy eigenlayer
 	./tests/anvil/deploy-eigenlayer-save-anvil-state.sh
@@ -104,11 +104,10 @@ help:
 	@echo "  help     - Show this help message"
 
 ____OFFCHAIN_SOFTWARE___: ## 
-# start-aggregator: ## 
-# 	go run aggregator/cmd/main.go --config config-files/aggregator.yaml \
-# 		--credible-squaring-deployment ${DEPLOYMENT_FILES_DIR}/credible_squaring_avs_deployment_output.json \
-# 		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
-# 		2>&1 | zap-pretty
+start-aggregator: ## 
+	go run aggregator/cmd/main.go --config config-files/aggregator.yaml \
+		--credible-squaring-deployment ${DEPLOYMENT_FILES_DIR}/keeper_network_avs_deployment_output.json \
+		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
 
 start-keeper: ## 
 	go run keeper/keeper.go

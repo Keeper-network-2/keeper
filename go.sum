@@ -16,6 +16,8 @@ github.com/DataDog/zstd v1.5.2/go.mod h1:g4AWEaM3yOg3HYfnJ3YIawPnVdXJh9QME85blwS
 github.com/Joker/hpp v1.0.0/go.mod h1:8x5n+M1Hp5hC0g8okX3sR3vFQwynaX/UgSOM9MeBKzY=
 github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775 h1:xQQ4xnlzO1n0nU2HPizd00H2N3zacJjbSPwLhOHxZEo=
 github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
+github.com/Layr-Labs/incredible-squaring-avs v0.0.0-20240514045747-90d3254784d9 h1:c7ygR7OgEBoy7a2PX7IlHDAafrwNmD9FmTfuaf4CWsQ=
+github.com/Layr-Labs/incredible-squaring-avs v0.0.0-20240514045747-90d3254784d9/go.mod h1:sWzO5B3xgXHjtwe63uezikw+on8eJVM0rAfRhfNP24Y=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/Microsoft/hcsshim v0.11.4 h1:68vKo2VN8DE9AdN4tnkWnmdhqdbpUFM8OF3Airm7fz8=

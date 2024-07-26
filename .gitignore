@@ -27,3 +27,5 @@ logs.txt
 # just for example
 id_rsa
 
+contracts/bin/script/
+contracts/bin/src/
