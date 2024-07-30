@@ -10,7 +10,7 @@ require (
 	github.com/ethereum/go-ethereum v1.13.14
 	github.com/prometheus/client_golang v1.19.0
 	github.com/testcontainers/testcontainers-go v0.29.1
-	github.com/urfave/cli v1.22.14
+	github.com/urfave/cli v1.22.15
 	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.18.0
 )
@@ -31,7 +31,7 @@ require (
 	github.com/containerd/containerd v1.7.12 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
@@ -52,6 +52,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/klauspost/compress v1.16.0 // indirect
 	github.com/lmittmann/tint v1.0.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

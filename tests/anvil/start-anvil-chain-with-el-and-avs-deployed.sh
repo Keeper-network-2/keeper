@@ -13,6 +13,7 @@ set -a
 source ./utils.sh
 set +a
 
+echo "Setting up cleanup trap..."
 cleanup() {
     echo "Executing cleanup function..."
     set +e
@@ -24,13 +25,17 @@ cleanup() {
 }
 trap 'cleanup $LINENO "$BASH_COMMAND"' EXIT
 
+echo "Starting an anvil instance with eigenlayer contracts deployed..."
 # start an anvil instance in the background that has eigenlayer contracts deployed
 # we start anvil in the background so that we can run the below script
 # anvil --load-state avs-and-eigenlayer-deployed-anvil-state.json &
 # FIXME: bug in latest foundry version, so we use this pinned version instead of latest
 start_anvil_docker $parent_path/avs-and-eigenlayer-deployed-anvil-state.json ""
 
+echo "Changing directory to contracts..."
 cd ../../contracts
+
+echo "Advancing chain to the correct block..."
 # we need to restart the anvil chain at the correct block, otherwise the indexRegistry has a quorumUpdate at the block number
 # at which it was deployed (aka quorum was created/updated), but when we start anvil by loading state file it starts at block number 0
 # so calling getOperatorListAtBlockNumber reverts because it thinks there are no quorums registered at block 0

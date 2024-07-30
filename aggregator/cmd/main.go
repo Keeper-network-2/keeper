@@ -13,7 +13,6 @@ import (
 )
 
 var (
-	// Version is the version of the binary.
 	Version   string
 	GitCommit string
 	GitDate   string

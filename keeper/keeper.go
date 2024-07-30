@@ -1,4 +1,4 @@
-package main
+package keeper
 
 import (
     "context"
@@ -18,7 +18,6 @@ import (
     "github.com/ethereum/go-ethereum/crypto"
     "github.com/ethereum/go-ethereum/ethclient"
     "github.com/Keeper-network-2/keeper/aggregator"
-    "github.com/Keeper-network-2/keeper/keeper"
     "github.com/Keeper-network-2/keeper/keeper/rpc_client"
 )
 
@@ -27,7 +26,7 @@ type Keeper struct {
     privateKey       *ecdsa.PrivateKey
     publicKey        *ecdsa.PublicKey
     address          common.Address
-    aggregatorClient *AggregatorRpcClient
+    aggregatorClient *rpc_client.AggregatorRpcClient
 }
 
 type Task struct {
@@ -52,7 +51,7 @@ func NewKeeper(ethURL, aggregatorAddr, privateKeyHex string) (*Keeper, error) {
     publicKey := privateKey.Public().(*ecdsa.PublicKey)
     address := crypto.PubkeyToAddress(*publicKey)
 
-    aggregatorClient, err := NewAggregatorRpcClient(aggregatorAddr)
+    aggregatorClient, err := rpc_client.NewAggregatorRpcClient(aggregatorAddr)
     if err != nil {
         return nil, fmt.Errorf("failed to create aggregator client: %v", err)
     }

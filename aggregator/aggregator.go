@@ -2,24 +2,23 @@ package aggregator
 
 import (
 	"context"
+	// "log"
+	"sync"
 	"net/http"
 	"net/rpc"
-	"sync"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	// "github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
-	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/services/avsregistry"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
-	// "github.com/Layr-Labs/incredible-squaring-avs/aggregator/types"
-	// "github.com/Layr-Labs/incredible-squaring-avs/core"
+	"github.com/Layr-Labs/incredible-squaring-avs/core"
 	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
 	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
 
@@ -27,24 +26,22 @@ import (
 )
 
 type Aggregator struct {
-	logger               logging.Logger
-	serverIpPortAddr     string
-	avsWriter            chainio.AvsWriterer
+	logger                logging.Logger
+	serverIpPortAddr      string
+	avsWriter             chainio.AvsWriterer
 	blsAggregationService blsagg.BlsAggregationService
-    tasks                 map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask
+	tasks                 map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask
 	tasksMu               sync.RWMutex
 	taskResponses         map[types.TaskIndex]map[sdktypes.TaskResponseDigest]cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 	taskResponsesMu       sync.RWMutex
-	shutdownChan         chan struct{}
-	wg                   sync.WaitGroup
+	shutdownChan          chan struct{}
+	wg                    sync.WaitGroup
 }
 
 type SignedTaskResponse struct {
-	TaskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-	BlsSignature bls.Signature
-	OperatorId   types.OperatorId
+	JobID      uint32
+	SignedData []byte
 }
-
 
 func NewAggregator(c *config.Config) (*Aggregator, error) {
 	avsReader, err := chainio.BuildAvsReaderFromConfig(c)
@@ -59,7 +56,7 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		return nil, err
 	}
 
-    chainioConfig := sdkclients.BuildAllConfig{
+	chainioConfig := clients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpRpcUrl,
 		EthWsUrl:                   c.EthWsRpcUrl,
 		RegistryCoordinatorAddr:    c.IncredibleSquaringRegistryCoordinatorAddr.String(),
@@ -68,48 +65,47 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		PromMetricsIpPortAddress:   ":9090",
 	}
 
-	clients, err := clients.BuildAll(chainioConfig, c.EcdsaPrivateKey, c.Logger)
+	sdkClients, err := clients.BuildAll(chainioConfig, c.EcdsaPrivateKey, c.Logger)
 	if err != nil {
 		c.Logger.Errorf("Cannot create sdk clients", "err", err)
 		return nil, err
 	}
 
-    operatorPubkeysService := oprsinfoserv.NewOperatorsInfoServiceInMemory(context.Background(), clients.AvsRegistryChainSubscriber, clients.AvsRegistryChainReader, c.Logger)
+	operatorPubkeysService := oprsinfoserv.NewOperatorsInfoServiceInMemory(context.Background(), sdkClients.AvsRegistryChainSubscriber, sdkClients.AvsRegistryChainReader, c.Logger)
 	avsRegistryService := avsregistry.NewAvsRegistryServiceChainCaller(avsReader, operatorPubkeysService, c.Logger)
 	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, c.Logger)
 
-
 	return &Aggregator{
-		logger:               c.Logger,
-		serverIpPortAddr:     c.AggregatorServerIpPortAddr,
-		avsWriter:            avsWriter,
+		logger:                c.Logger,
+		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
+		avsWriter:             avsWriter,
 		blsAggregationService: blsAggregationService,
-		shutdownChan:         make(chan struct{}),
+		tasks:                 make(map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask),
+		taskResponses:         make(map[types.TaskIndex]map[sdktypes.TaskResponseDigest]cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse),
 	}, nil
 }
 
 func (agg *Aggregator) Start(ctx context.Context) error {
-    agg.logger.Info("Starting aggregator")
+	agg.logger.Info("Starting aggregator")
 
-    agg.wg.Add(2)
-    go func() {
-        defer agg.wg.Done()
-        err := agg.startServer(ctx)
-        if err != nil {
-            agg.logger.Fatal("Failed to start server: ", err)
-        }
-    }()
+	agg.wg.Add(2)
+	go func() {
+		defer agg.wg.Done()
+		err := agg.startServer(ctx)
+		if err != nil {
+			agg.logger.Fatal("Failed to start server: ", err)
+		}
+	}()
 
-    go func() {
-        defer agg.wg.Done()
-        agg.listenForEvents(ctx)
-    }()
+	go func() {
+		defer agg.wg.Done()
+		agg.listenForEvents(ctx)
+	}()
 
-    return nil
+	return nil
 }
 
 func (agg *Aggregator) startServer(ctx context.Context) error {
-
 	err := rpc.Register(agg)
 	if err != nil {
 		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
@@ -136,17 +132,59 @@ func (agg *Aggregator) listenForEvents(ctx context.Context) {
 }
 
 func (agg *Aggregator) handleAggregatedSignature(resp blsagg.BlsAggregationServiceResponse) {
-	// Implement signature aggregation logic here
-	agg.logger.Info("Received aggregated signature", "taskIndex", resp.TaskIndex)
-	// Process the aggregated signature and potentially send it onchain
+	// Check for errors in the response
+	if resp.Err != nil {
+		agg.logger.Error("BlsAggregationServiceResponse contains an error", "err", resp.Err)
+		// Panicking to help with debugging (fail fast), but shouldn't panic if we run this in production
+		panic(resp.Err)
+	}
+
+	// Convert non-signer public keys
+	nonSignerPubkeys := []cstaskmanager.BN254G1Point{}
+	for _, nonSignerPubkey := range resp.NonSignersPubkeysG1 {
+		nonSignerPubkeys = append(nonSignerPubkeys, core.ConvertToBN254G1Point(nonSignerPubkey))
+	}
+
+	// Convert quorum aggregate public keys
+	quorumApks := []cstaskmanager.BN254G1Point{}
+	for _, quorumApk := range resp.QuorumApksG1 {
+		quorumApks = append(quorumApks, core.ConvertToBN254G1Point(quorumApk))
+	}
+
+	// Create non-signer stakes and signature
+	nonSignerStakesAndSignature := cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature{
+		NonSignerPubkeys:             nonSignerPubkeys,
+		QuorumApks:                   quorumApks,
+		ApkG2:                        core.ConvertToBN254G2Point(resp.SignersApkG2),
+		Sigma:                        core.ConvertToBN254G1Point(resp.SignersAggSigG1.G1Point),
+		NonSignerQuorumBitmapIndices: resp.NonSignerQuorumBitmapIndices,
+		QuorumApkIndices:             resp.QuorumApkIndices,
+		TotalStakeIndices:            resp.TotalStakeIndices,
+		NonSignerStakeIndices:        resp.NonSignerStakeIndices,
+	}
+
+	agg.logger.Info("Threshold reached. Sending aggregated response on-chain.",
+		"taskIndex", resp.TaskIndex,
+	)
+
+	// Get the task and task response from the aggregator's maps
+	agg.tasksMu.RLock()
+	task := agg.tasks[resp.TaskIndex]
+	agg.tasksMu.RUnlock()
+	agg.taskResponsesMu.RLock()
+	taskResponse := agg.taskResponses[resp.TaskIndex][resp.TaskResponseDigest]
+	agg.taskResponsesMu.RUnlock()
+
+	// Send the aggregated response on-chain
+	_, err := agg.avsWriter.SendAggregatedResponse(context.Background(), task, taskResponse, nonSignerStakesAndSignature)
+	if err != nil {
+		agg.logger.Error("Aggregator failed to respond to task", "err", err)
+	}
 }
 
 func (agg *Aggregator) Shutdown(ctx context.Context) error {
 	agg.logger.Info("Shutting down aggregator")
 	close(agg.shutdownChan)
-
-	// Stop the RPC server and other goroutines
-	// You might need to implement additional shutdown logic for your specific components
 
 	// Wait for all goroutines to finish
 	done := make(chan struct{})

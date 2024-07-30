@@ -1,8 +1,8 @@
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
 .PHONY: help tests
-# help:
-# 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+help:
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 AGGREGATOR_ECDSA_PRIV_KEY=0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6
 
@@ -91,17 +91,17 @@ test:
 	go test ./...
 
 # Help message
-help:
-	@echo "Usage:"
-	@echo "  make [target]"
-	@echo ""
-	@echo "Targets:"
-	@echo "  all      - Build the binary (default)"
-	@echo "  build    - Build the binary"
-	@echo "  run      - Build and run the application"
-	@echo "  clean    - Clean up the binary"
-	@echo "  test     - Run tests"
-	@echo "  help     - Show this help message"
+# help:
+# 	@echo "Usage:"
+# 	@echo "  make [target]"
+# 	@echo ""
+# 	@echo "Targets:"
+# 	@echo "  all      - Build the binary (default)"
+# 	@echo "  build    - Build the binary"
+# 	@echo "  run      - Build and run the application"
+# 	@echo "  clean    - Clean up the binary"
+# 	@echo "  test     - Run tests"
+# 	@echo "  help     - Show this help message"
 
 ____OFFCHAIN_SOFTWARE___: ## 
 start-aggregator: ## 
@@ -110,7 +110,7 @@ start-aggregator: ##
 		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
 
 start-keeper: ## 
-	go run keeper/keeper.go
+	go run keeper/cmd/main.go
 
 start-task-manager: ## 
 	cd taskmanager && go run cmd/main.go
