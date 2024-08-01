@@ -9,7 +9,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
-	erc20mock "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/ERC20Mock"
+	erc20mock "github.com/Keeper-network-2/keeper/contracts/bindings/ERC20Mock"
 	csservicemanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringServiceManager"
 	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
 )
