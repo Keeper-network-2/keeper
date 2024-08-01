@@ -110,10 +110,10 @@ start-aggregator: ##
 		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
 
 start-keeper: ## 
-	go run keeper/cmd/main.go --config config-files/operator.anvil.yaml
+	go run keeper/cmd/main.go --config config-files/keeper.anvil.yaml \
 
 start-task-manager: ## 
-	cd taskmanager && go run cmd/main.go
+	cd taskmanager && go run cmd/main.go \
 
 
 run-plugin: ## 

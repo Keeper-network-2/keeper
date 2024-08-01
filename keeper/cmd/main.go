@@ -16,16 +16,8 @@ func main() {
 
     app.Flags = []cli.Flag{
         cli.StringFlag{
-            Name:  "eth-url",
-            Usage: "Ethereum client URL",
-        },
-        cli.StringFlag{
-            Name:  "aggregator-addr",
-            Usage: "Aggregator RPC address",
-        },
-        cli.StringFlag{
-            Name:  "private-key",
-            Usage: "Private key in hex format",
+            Name:  "config",
+            Usage: "Path to Config File",
         },
     }
 
@@ -36,11 +28,9 @@ func main() {
 }
 
 func runKeeper(ctx *cli.Context) error {
-    ethURL := ctx.String("eth-url")
-    aggregatorAddr := ctx.String("aggregator-addr")
-    privateKeyHex := ctx.String("private-key")
+    configPath := ctx.String("config")
 
-    k, err := keeper.NewKeeper(ethURL, aggregatorAddr, privateKeyHex)
+    k, err := keeper.NewKeeper(configPath)
     if err != nil {
         return err
     }

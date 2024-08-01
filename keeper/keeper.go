@@ -1,24 +1,29 @@
 package keeper
 
 import (
-    "context"
-    "crypto/ecdsa"
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "log"
-    "math/big"
-    "net/http"
-    "strings"
+	"context"
+	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"math/big"
+	"net/http"
+	"os"
+	"strings"
 
-    "github.com/ethereum/go-ethereum"
-    "github.com/ethereum/go-ethereum/accounts/abi"
-    "github.com/ethereum/go-ethereum/common"
-    "github.com/ethereum/go-ethereum/core/types"
-    "github.com/ethereum/go-ethereum/crypto"
-    "github.com/ethereum/go-ethereum/ethclient"
-    "github.com/Keeper-network-2/keeper/aggregator"
-    "github.com/Keeper-network-2/keeper/keeper/rpc_client"
+	"gopkg.in/yaml.v2"
+
+	"github.com/Keeper-network-2/keeper/aggregator"
+	"github.com/Keeper-network-2/keeper/keeper/rpc_client"
+	nodeC "github.com/Keeper-network-2/keeper/types"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+    "github.com/Layr-Labs/eigensdk-go/signerv2"
 )
 
 type Keeper struct {
@@ -29,6 +34,12 @@ type Keeper struct {
     aggregatorClient *rpc_client.AggregatorRpcClient
 }
 
+type Config struct {
+    EthURL       string `yaml:"ethURL"`
+    PrivateKeyHex string `yaml:"private"`
+    AggregatorAddr string `yaml:"aggregatorAddr"`
+}
+
 type Task struct {
     JobID        uint32 `json:"jobID"`
     TaskID       uint32 `json:"taskID"`
@@ -37,32 +48,90 @@ type Task struct {
     TargetFunc   string `json:"targetFunc"`
 }
 
-func NewKeeper(ethURL, aggregatorAddr, privateKeyHex string) (*Keeper, error) {
-    ethClient, err := ethclient.Dial(ethURL)
+func NewKeeper(configPath string) (*Keeper, error) {
+    configData, err := ioutil.ReadFile(configPath)
     if err != nil {
-        return nil, fmt.Errorf("failed to connect to Ethereum client: %v", err)
+        return nil, fmt.Errorf("failed to read config file: %v", err)
     }
 
-    privateKey, err := crypto.HexToECDSA(privateKeyHex)
+    // fmt.Printf("Config data: %s\n", configData)
+
+    var config nodeC.NodeConfig
+    err = yaml.Unmarshal(configData, &config)
     if err != nil {
-        return nil, fmt.Errorf("failed to parse private key: %v", err)
+        return nil, fmt.Errorf("failed to unmarshal config: %w", err)
     }
 
-    publicKey := privateKey.Public().(*ecdsa.PublicKey)
-    address := crypto.PubkeyToAddress(*publicKey)
+    // Print the config
+    // fmt.Printf("Config: %+v\n", config)
 
-    aggregatorClient, err := rpc_client.NewAggregatorRpcClient(aggregatorAddr)
-    if err != nil {
-        return nil, fmt.Errorf("failed to create aggregator client: %v", err)
+    ethURL := config.EthRpcUrl
+    aggregatorAddr := config.AggregatorServerIpPortAddress
+
+    ecdsaKeyPasswd, ok := os.LookupEnv("KEEPER_ECDSA_KEY_PASSWD")
+    if !ok {
+        logger.Warnf("KEEPER_ECDSA_KEY_PASSWD env var not set. Using empty string as password")
     }
 
-    return &Keeper{
-        ethClient:        ethClient,
-        privateKey:       privateKey,
-        publicKey:        publicKey,
-        address:          address,
-        aggregatorClient: aggregatorClient,
-    }, nil
+    blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
+	if !ok {
+		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+	}
+	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
+	if err != nil {
+		logger.Errorf("Cannot parse bls private key", "err", err)
+		return nil, err
+	}
+
+    chainId, err := ethRpcClient.ChainID(context.Background())
+	if err != nil {
+		logger.Error("Cannot get chainId", "err", err)
+		return nil, err
+	}
+
+    signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
+        KeyStorePath: config.EcdsaPrivateKeyStorePath,
+        Password:     ecdsaKeyPasswd,
+    }, chainId)
+    if err != nil {
+		panic(err)
+	}
+
+    operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
+		c.EcdsaPrivateKeyStorePath,
+		ecdsaKeyPassword,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+
+    // ethClient, err := ethclient.Dial(ethURL)
+    // if err != nil {
+    //     return nil, fmt.Errorf("failed to connect to Ethereum client: %v", err)
+    // }
+
+    // privateKey, err := crypto.HexToECDSA(privateKeyHex)
+    // if err != nil {
+    //     return nil, fmt.Errorf("failed to parse private key: %v", err)
+    // }
+
+    // publicKey := privateKey.Public().(*ecdsa.PublicKey)
+    // address := crypto.PubkeyToAddress(*publicKey)
+
+    // aggregatorClient, err := rpc_client.NewAggregatorRpcClient(aggregatorAddr)
+    // if err != nil {
+    //     return nil, fmt.Errorf("failed to create aggregator client: %v", err)
+    // }
+
+    // return &Keeper{
+    //     ethClient:        ethClient,
+    //     privateKey:       privateKey,
+    //     publicKey:        publicKey,
+    //     address:          address,
+    //     aggregatorClient: aggregatorClient,
+    // }, nil
+    return &Keeper{}, nil
 }
 
 func (k *Keeper) Start() {
