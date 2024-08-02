@@ -9,24 +9,26 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"os"
+	// "os"
 	"strings"
 
+	logger "github.com/Layr-Labs/eigensdk-go/logging"
 	"gopkg.in/yaml.v2"
 
 	"github.com/Keeper-network-2/keeper/aggregator"
 	"github.com/Keeper-network-2/keeper/keeper/rpc_client"
 	nodeC "github.com/Keeper-network-2/keeper/types"
+	// "github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-    "github.com/Layr-Labs/eigensdk-go/signerv2"
 )
 
 type Keeper struct {
+    loggerK          logger.Logger
     ethClient        *ethclient.Client
     privateKey       *ecdsa.PrivateKey
     publicKey        *ecdsa.PublicKey
@@ -53,7 +55,6 @@ func NewKeeper(configPath string) (*Keeper, error) {
     if err != nil {
         return nil, fmt.Errorf("failed to read config file: %v", err)
     }
-
     // fmt.Printf("Config data: %s\n", configData)
 
     var config nodeC.NodeConfig
@@ -62,68 +63,10 @@ func NewKeeper(configPath string) (*Keeper, error) {
         return nil, fmt.Errorf("failed to unmarshal config: %w", err)
     }
 
-    // Print the config
-    // fmt.Printf("Config: %+v\n", config)
-
-    ethURL := config.EthRpcUrl
-    aggregatorAddr := config.AggregatorServerIpPortAddress
-
-    ecdsaKeyPasswd, ok := os.LookupEnv("KEEPER_ECDSA_KEY_PASSWD")
-    if !ok {
-        logger.Warnf("KEEPER_ECDSA_KEY_PASSWD env var not set. Using empty string as password")
-    }
-
-    blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
-	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
-		return nil, err
-	}
-
-    chainId, err := ethRpcClient.ChainID(context.Background())
-	if err != nil {
-		logger.Error("Cannot get chainId", "err", err)
-		return nil, err
-	}
-
-    signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
-        KeyStorePath: config.EcdsaPrivateKeyStorePath,
-        Password:     ecdsaKeyPasswd,
-    }, chainId)
-    if err != nil {
-		panic(err)
-	}
-
-    operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
-		c.EcdsaPrivateKeyStorePath,
-		ecdsaKeyPassword,
-	)
-	if err != nil {
-		return nil, err
-	}
+    
 
 
-    // ethClient, err := ethclient.Dial(ethURL)
-    // if err != nil {
-    //     return nil, fmt.Errorf("failed to connect to Ethereum client: %v", err)
-    // }
-
-    // privateKey, err := crypto.HexToECDSA(privateKeyHex)
-    // if err != nil {
-    //     return nil, fmt.Errorf("failed to parse private key: %v", err)
-    // }
-
-    // publicKey := privateKey.Public().(*ecdsa.PublicKey)
-    // address := crypto.PubkeyToAddress(*publicKey)
-
-    // aggregatorClient, err := rpc_client.NewAggregatorRpcClient(aggregatorAddr)
-    // if err != nil {
-    //     return nil, fmt.Errorf("failed to create aggregator client: %v", err)
-    // }
-
+    
     // return &Keeper{
     //     ethClient:        ethClient,
     //     privateKey:       privateKey,

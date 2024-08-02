@@ -3,9 +3,8 @@ package aggregator
 import (
 	"context"
 	"math/big"
-	// "log"
-	"net/http"
-	"net/rpc"
+	// "net/http"
+	// "net/rpc"
 	"sync"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -39,10 +38,7 @@ type Aggregator struct {
 	wg                    sync.WaitGroup
 }
 
-type SignedTaskResponse struct {
-	JobID      uint32
-	SignedData []byte
-}
+
 
 func NewAggregator(c *config.Config) (*Aggregator, error) {
 	avsReader, err := chainio.BuildAvsReaderFromConfig(c)
@@ -72,7 +68,7 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		return nil, err
 	}
 
-	logFilterQueryBlockRange :=big.NewInt(100)
+	logFilterQueryBlockRange := big.NewInt(100)
 
 	hashFunction := func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
 		customResponse, _ := taskResponse.(types.TaskResponse)
@@ -110,25 +106,13 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 		agg.listenForEvents(ctx)
 	}()
 
+	<-ctx.Done()
 	return nil
 }
 
-func (agg *Aggregator) startServer(ctx context.Context) error {
-	err := rpc.Register(agg)
-	if err != nil {
-		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
-	}
-	rpc.HandleHTTP()
-	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
-	if err != nil {
-		agg.logger.Fatal("ListenAndServe", "err", err)
-	}
 
-	return nil
-}
 
 func (agg *Aggregator) listenForEvents(ctx context.Context) {
-	defer agg.wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
@@ -190,21 +174,7 @@ func (agg *Aggregator) handleAggregatedSignature(resp blsagg.BlsAggregationServi
 	}
 }
 
-func (agg *Aggregator) Shutdown(ctx context.Context) error {
-	agg.logger.Info("Shutting down aggregator")
-	close(agg.shutdownChan)
-
-	// Wait for all goroutines to finish
-	done := make(chan struct{})
-	go func() {
-		agg.wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+func (a *Aggregator) DummyMethod(argType *struct{}, replyType *struct{}) error {
+    // No operation performed.
+    return nil
 }
