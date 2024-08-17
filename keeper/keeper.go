@@ -11,6 +11,7 @@ import (
 	"net/http"
 	// "os"
 	"strings"
+    "fmt"
 
 	logger "github.com/Layr-Labs/eigensdk-go/logging"
 	"gopkg.in/yaml.v2"
@@ -63,6 +64,8 @@ func NewKeeper(configPath string) (*Keeper, error) {
         return nil, fmt.Errorf("failed to unmarshal config: %w", err)
     }
 
+    // print the config
+    fmt.Printf("Config: %+v\n", config)
     
 
 
