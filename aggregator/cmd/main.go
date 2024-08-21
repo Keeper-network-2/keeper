@@ -9,7 +9,7 @@ import (
 
 	"github.com/urfave/cli"
 	"github.com/Keeper-network-2/keeper/aggregator"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
+	"github.com/Keeper-network-2/keeper/core/config"
 )
 
 var (

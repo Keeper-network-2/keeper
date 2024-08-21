@@ -2,6 +2,8 @@ package core
 
 import (
 	"math/big"
+	"errors"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
@@ -41,20 +43,27 @@ func AbiEncodeTaskResponse(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskRe
 	return bytes, nil
 }
 
+type SignedTaskResponse struct {
+    JobID      uint32
+    SignedData []byte
+}
+
 // GetTaskResponseDigest returns the hash of the TaskResponse, which is what operators sign over
-func GetTaskResponseDigest(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) ([32]byte, error) {
+func GetTaskResponseDigest(signedResponse *SignedTaskResponse) ([32]byte, error) {
+    if signedResponse == nil {
+        return [32]byte{}, errors.New("signedResponse is nil")
+    }
 
-	encodeTaskResponseByte, err := AbiEncodeTaskResponse(h)
-	if err != nil {
-		return [32]byte{}, err
-	}
+    // Combine JobID and SignedData into a single byte slice
+    jobIDBytes := common.LeftPadBytes([]byte{byte(signedResponse.JobID)}, 4)
+    dataToHash := append(jobIDBytes, signedResponse.SignedData...)
 
-	var taskResponseDigest [32]byte
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(encodeTaskResponseByte)
-	copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+    var taskResponseDigest [32]byte
+    hasher := sha3.NewLegacyKeccak256()
+    hasher.Write(dataToHash)
+    copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
 
-	return taskResponseDigest, nil
+    return taskResponseDigest, nil
 }
 
 // BINDING UTILS - conversion from contract structs to golang structs

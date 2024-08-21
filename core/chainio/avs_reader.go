@@ -10,13 +10,13 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 
-	erc20mock "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/ERC20Mock"
+	erc20mock "github.com/Keeper-network-2/keeper/contracts/bindings/ERC20Mock"
 	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
+	"github.com/Keeper-network-2/keeper/core/config"
 )
 
 type AvsReaderer interface {
-	sdkavsregistry.AvsRegistryReader
+	sdkavsregistry.Reader
 
 	CheckSignatures(
 		ctx context.Context, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
@@ -25,7 +25,7 @@ type AvsReaderer interface {
 }
 
 type AvsReader struct {
-	sdkavsregistry.AvsRegistryReader
+	sdkavsregistry.Reader
 	AvsServiceBindings *AvsManagersBindings
 	logger             logging.Logger
 }
@@ -46,9 +46,9 @@ func BuildAvsReader(registryCoordinatorAddr, operatorStateRetrieverAddr gethcomm
 	}
 	return NewAvsReader(avsRegistryReader, avsManagersBindings, logger)
 }
-func NewAvsReader(avsRegistryReader sdkavsregistry.AvsRegistryReader, avsServiceBindings *AvsManagersBindings, logger logging.Logger) (*AvsReader, error) {
+func NewAvsReader(avsRegistryReader sdkavsregistry.Reader, avsServiceBindings *AvsManagersBindings, logger logging.Logger) (*AvsReader, error) {
 	return &AvsReader{
-		AvsRegistryReader:  avsRegistryReader,
+		Reader:  avsRegistryReader,
 		AvsServiceBindings: avsServiceBindings,
 		logger:             logger,
 	}, nil
