@@ -11,7 +11,7 @@ import (
 	"net/http"
 	// "os"
 	"strings"
-    "fmt"
+    // "fmt"
 
 	logger "github.com/Layr-Labs/eigensdk-go/logging"
 	"gopkg.in/yaml.v2"
